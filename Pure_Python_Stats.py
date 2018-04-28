@@ -11,6 +11,7 @@
 #
 # Note: Instead of this, just install and use numpy for working with arrays if you are able to.
 
+from functools import reduce
 
 def ones(m,n):
     """
@@ -38,6 +39,22 @@ def multiplyLists(lst1, lst2):
 
     assert len(lst1) == len(lst2), "The lists have to be the same length."
     return list(map(lambda tuple_ : tuple_[0] * tuple_[1], zip(lst1, lst2)))
+
+def divideLists(lst1, lst2):
+    """
+    Return the elementwise quotient of lst1 and lst2.
+    
+    >>> divideLists([1, 2, 3],[4, 5, 6])
+    [0.25, 0.4, 0.5]
+    >>> divideLists([1, 2, 3],[4, 0, 6])
+    Traceback (most recent call last): 
+     ...
+    AssertionError: Second list has entry equal to zero.
+    """
+
+    assert len(lst1) == len(lst2), "The lists have to be the same length."
+    assert reduce(lambda x,y: x*y, lst2) != 0, "Second list has entry equal to zero."
+    return list(map(lambda tuple_ : tuple_[0] / tuple_[1], zip(lst1, lst2)))
 
 
 def scalarMult(lst, arrList):
@@ -142,6 +159,9 @@ def mean_center(arrList):
     arrList = subtract(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
     return means, arrList
 
+def un_normalize(lst, xstdevs, ystdevs):
+    assert len(lst) == len(xstdevs) == len(ystdevs), "Lists have to be the same length."
+    return multiplyLists(lst, divideLists(ystdevs, xstdevs))
         
 def normalize(arrList):
     """
