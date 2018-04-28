@@ -24,7 +24,7 @@ def ones(m,n):
 
 def addLists(lst1, lst2):
     """
-    Return the elementwise sum of the lst1 and lst2. 
+    Return the elementwise sum of lst1 and lst2. 
 
     >>> addLists([1, 2, 3],[4, 5, 6])
     [5, 7, 9]
@@ -34,7 +34,7 @@ def addLists(lst1, lst2):
 
 
 def multiplyLists(lst1, lst2):
-    """ Return the elementwise product of the lst1 and lst2. """
+    """ Return the elementwise product of lst1 and lst2. """
 
     assert len(lst1) == len(lst2), "The lists have to be the same length."
     return list(map(lambda tuple_ : tuple_[0] * tuple_[1], zip(lst1, lst2)))
@@ -43,7 +43,7 @@ def multiplyLists(lst1, lst2):
 def scalarMult(lst, arrList):
     """ 
     Return arrList with the first column multiplied by the first element of lst, the second 
-    column mutiplied by the second element of lst, and so on.
+    column multiplied by the second element of lst, and so on.
 
     >>> scalarMult([2], [[1], [2], [3]])
     [[2], [4], [6]]
@@ -57,7 +57,7 @@ def scalarMult(lst, arrList):
 
 def add(arrList1, arrList2):
     """
-    Return the element-wise different of two mxn arrayLists. 
+    Return the element-wise sum of two mxn arrayLists. 
 
     >>> add([[1, 2, 3]], [[4, 5, 6]])
     [[5, 7, 9]]
@@ -77,7 +77,7 @@ def add(arrList1, arrList2):
 
 def subtract(arrList1, arrList2):
     """
-    Return the element-wise different of two mxn arrayLists. 
+    Return the element-wise difference of two mxn arrayLists. 
 
     >>> subtract([[1, 2, 3]], [[4, 5, 6]])
     [[-3, -3, -3]]
