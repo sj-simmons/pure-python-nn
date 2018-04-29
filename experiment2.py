@@ -62,11 +62,11 @@ print("mean and st. dev. of intercepts: mean =",\
 # of the distribution of slopes and weights. If you don't have matplotlib installed have a
 # look at experiment2.png.
 
-import matplotlib.pyplot as plt
-plt.subplot(1,2,1)
-plt.hist(slopes, 50, normed=1)
-plt.title("slope")
-plt.subplot(1,2,2)
-plt.hist(intercepts, 50, normed=1)
-plt.title("intercept")
-plt.show()
+#import matplotlib.pyplot as plt
+#plt.subplot(1,2,1)
+#plt.hist(slopes, 50, normed=1)
+#plt.title("slope")
+#plt.subplot(1,2,2)
+#plt.hist(intercepts, 50, normed=1)
+#plt.title("intercept")
+#plt.show()
