@@ -1,6 +1,8 @@
 # SGD_nn.py                                                                  Simmons  Spring 18
 #
 # This implements a feed-forward, fully-connected neural net in pure Python.
+#
+# Currently (4/29/18) does not support hidden layers.
 
 import random
 
@@ -22,9 +24,11 @@ class Node:
 
   def __init__(self, nodeList):
 
+    self.inputs = []
+    self.nodeList = nodeList
     if verbose: print("  node created")
     for node in nodeList:
-      self.inputs.append(InputLink(node, random.random()-.5))
+      self.inputs.append(InputLink(node, random.random() - 0.5))
 
   def setState(self, value):
     self.state = value
@@ -67,30 +71,36 @@ class Node:
 
 class Net:
 
-  def __init__(self, nodes_per_layer):
+  nodes_per_layer = []
+  inputNodes = []
+  hiddenNodes = []
+  outputNodes = []
 
-    assert len(nodes_per_layer) == 2 and nodes_per_layer[1] == 1,\
-                                          "No hidden layers or multiple ouputs for now!"
+  def __init__(self, nodes_per_layer):
     self.inputNodes = []
     self.hiddenNodes = []
     self.outputNodes = []
 
+    assert len(nodes_per_layer) == 2 and nodes_per_layer[1] == 1,\
+                                          "No hidden layers or multiple ouputs for now!"
+    self.nodes_per_layer = nodes_per_layer
+
     # Populate the input nodes
-    if verbose: print("populating input layer with",nodes_per_layer[0],"node(s).")
-    for node in range(nodes_per_layer[0]):
+    if verbose: print("populating input layer with", self.nodes_per_layer[0],"node(s).")
+    for node in range(self.nodes_per_layer[0]):
       self.inputNodes.append(Node([]))
 
     # Populate the hidden layers
-    for layer in range(1,len(nodes_per_layer)-1):
+    for layer in range(1,len(self.nodes_per_layer)-1):
       if verbose:\
-              print("populating hidden layer",layer,"with",nodes_per_layer[layer],"node(s).")
-      for node in range(nodes_per_layer[layer]):
+          print("populating hidden layer",layer,"with",self.nodes_per_layer[layer],"node(s).")
+      for node in range(self.nodes_per_layer[layer]):
         self.outputNodes.append(Node(self.hiddenNodes))
 
     # Populate the ouput layer
-    if verbose: print("populating output layer with",nodes_per_layer[1],"node(s).")
-    for node in range(nodes_per_layer[-1]):
-      if len(nodes_per_layer) < 3:  # if no hidden layers
+    if verbose: print("populating output layer with",self.nodes_per_layer[1],"node(s).")
+    for node in range(self.nodes_per_layer[-1]):
+      if len(self.nodes_per_layer) < 3:  # if no hidden layers
         self.outputNodes.append(Node(self.inputNodes))
       else:
         self.outputNodes.append(Node(self.hiddenNodes))
@@ -123,3 +133,21 @@ class Net:
   def getWeights(self):
     return self.outputNodes[0].getWeights()
 
+  # The following two methods allow one to create instances of this class within a
+  # Python 'with' statement.
+  # Using a 'with' statement is not necessary if you just want to instantiate an
+  # instance of Net() and train it only once, as in experiment1.py.
+  # But if you want to instantiate an instance and re-use in multiple times, as in
+  # experiment1.py, then, technically, one does well to clean things up in-between
+  # re-uses by employing a 'with' statement. (See experiment1.py).
+  # This has to do with the way garbage collection works in Python: specifically,
+  # objects are deleted not when the go our of scope but when all references to
+  # them have been removed.
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, *args):
+    self.inputNodes = []
+    self.hiddenNodes = []
+    self.outputNodes = []
