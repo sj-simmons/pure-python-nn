@@ -1,15 +1,17 @@
 # Pure_Python_Stats.py                                                     Simmons  Spring 2018
 #
-# This is a simple stats library in pure Python.  Most of the functions below operate on m-by-n
-# arrays but those have to be represents as lists of lists, and so are called 'arrayLists';
+# This is a simple 'tensor-like' stats library in pure Python 3.  Most of the functions below
+# operate on m-by-n arrays but those have to be represents as lists of lists, and so are called
+# 'arrayLists';
 #
-#                                                                           +-       -+
-#                                                                           |  1    2 |
-# like, say, this [[1,2],[3,-4],[-5,-6]] which represents the 3-by-2 array  |  3   -4 |.
-#                                                                           | -5   -6 |
-#                                                                           +-       -+
+#                                                                             +-       -+
+#                                                                             |  1    2 |
+# like, say, this: [[1,2],[3,-4],[-5,-6]], which represents the 3-by-2 array  |  3   -4 |.
+#                                                                             | -5   -6 |
+#                                                                             +-       -+
 #
-# Note: Instead of this, just install and use numpy for working with arrays if you are able to.
+# Note: Instead of using this in practice, just install and use numpy for working with arrays
+#       if you are able to.
 
 from functools import reduce
 
@@ -159,11 +161,6 @@ def mean_center(arrList):
     arrList = subtract(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
     return means, arrList
 
-def un_normalize(lst, xstdevs, ystdevs):
-    assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
-        "First and seconds list have to be the same length; third currently has to be length 1"
-    return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
-
 def normalize(arrList):
     """
     Normalize the arrayList.
@@ -190,6 +187,12 @@ def normalize(arrList):
     stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
     inverses = list(map(lambda x: 1/x, stdevs))
     return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList)
+
+def un_normalize(lst, xstdevs, ystdevs):
+    assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
+     "First and second list have to be the same length; third currently has to be length 1."+\
+     " The sizes are: " + str(len(lst)) + ", " +  str(len(xstdevs)) + ", " +  str(len(ystdevs))
+    return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
 
 
 if __name__ == '__main__':
