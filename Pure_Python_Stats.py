@@ -3,11 +3,11 @@
 # This is a simple stats library in pure Python.  Most of the functions below operate on m-by-n
 # arrays but those have to be represents as lists of lists, and so are called 'arrayLists';
 #
-#                                                                           +-       -+ 
+#                                                                           +-       -+
 #                                                                           |  1    2 |
 # like, say, this [[1,2],[3,-4],[-5,-6]] which represents the 3-by-2 array  |  3   -4 |.
 #                                                                           | -5   -6 |
-#                                                                           +-       -+ 
+#                                                                           +-       -+
 #
 # Note: Instead of this, just install and use numpy for working with arrays if you are able to.
 
@@ -25,7 +25,7 @@ def ones(m,n):
 
 def addLists(lst1, lst2):
     """
-    Return the elementwise sum of lst1 and lst2. 
+    Return the elementwise sum of lst1 and lst2.
 
     >>> addLists([1, 2, 3],[4, 5, 6])
     [5, 7, 9]
@@ -43,11 +43,11 @@ def multiplyLists(lst1, lst2):
 def divideLists(lst1, lst2):
     """
     Return the elementwise quotient of lst1 and lst2.
-    
+
     >>> divideLists([1, 2, 3],[4, 5, 6])
     [0.25, 0.4, 0.5]
     >>> divideLists([1, 2, 3],[4, 0, 6])
-    Traceback (most recent call last): 
+    Traceback (most recent call last):
      ...
     AssertionError: Second list has entry equal to zero.
     """
@@ -58,8 +58,8 @@ def divideLists(lst1, lst2):
 
 
 def scalarMult(lst, arrList):
-    """ 
-    Return arrList with the first column multiplied by the first element of lst, the second 
+    """
+    Return arrList with the first column multiplied by the first element of lst, the second
     column multiplied by the second element of lst, and so on.
 
     >>> scalarMult([2], [[1], [2], [3]])
@@ -68,13 +68,13 @@ def scalarMult(lst, arrList):
     [[2, 12], [4, 15], [6, 18]]
     """
     assert len(lst) == len(arrList[0]), \
-         "Length of list must be the same as length of the first list in the arrayList" 
+         "Length of list must be the same as length of the first list in the arrayList"
     return list(map(lambda lst2: multiplyLists(lst, lst2), arrList))
-    
+
 
 def add(arrList1, arrList2):
     """
-    Return the element-wise sum of two mxn arrayLists. 
+    Return the element-wise sum of two mxn arrayLists.
 
     >>> add([[1, 2, 3]], [[4, 5, 6]])
     [[5, 7, 9]]
@@ -94,7 +94,7 @@ def add(arrList1, arrList2):
 
 def subtract(arrList1, arrList2):
     """
-    Return the element-wise difference of two mxn arrayLists. 
+    Return the element-wise difference of two mxn arrayLists.
 
     >>> subtract([[1, 2, 3]], [[4, 5, 6]])
     [[-3, -3, -3]]
@@ -108,7 +108,7 @@ def subtract(arrList1, arrList2):
 
 def multiply(arrList1, arrList2):
     """
-    Return the element-wise product of two mxn arrayLists. 
+    Return the element-wise product of two mxn arrayLists.
 
     >>> multiply([[1, 2, 3]], [[4, 5, 6]])
     [[4, 10, 18]]
@@ -136,18 +136,18 @@ def columnwise_means(arrList):
             return addLists(arrList[0], helper(arrList[1:]))
     return list(map(lambda x: x / len(arrList), helper(arrList)))
 
- 
+
 def mean_center(arrList):
     """
     Mean-center the arrayList.
- 
+
     Args:
     arrList - a list of lists
 
     Returns:
-    list, arrayList  - a pair consisting of a list each entry of which is the mean of the 
+    list, arrayList  - a pair consisting of a list each entry of which is the mean of the
                        corresponding column of arrList, a list of lists each entry of which
-                       is that entry minus the mean of the column that that entry is in.. 
+                       is that entry minus the mean of the column that that entry is in..
     >>> mean_center([[1, 2, 3], [6, 7, 8]])
     ([3.5, 4.5, 5.5], [[-2.5, -2.5, -2.5], [2.5, 2.5, 2.5]])
     >>> mean_center([[1, 2, 3], [4, 5, 6]])
@@ -160,25 +160,26 @@ def mean_center(arrList):
     return means, arrList
 
 def un_normalize(lst, xstdevs, ystdevs):
-    assert len(lst) == len(xstdevs) == len(ystdevs), "Lists have to be the same length."
-    return multiplyLists(lst, divideLists(ystdevs, xstdevs))
-        
+    assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
+        "First and seconds list have to be the same length; third currently has to be length 1"
+    return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
+
 def normalize(arrList):
     """
     Normalize the arrayList.
- 
+
     Args:
     arrayList - a list of lists
 
     Returns:
-    list, arrayList  - a pair consisting of a list each entry of which is the standard 
-                       deviation of the corresponding column of arrList, a list of lists 
-                       each entry of which is that entry divided by the standard deviation 
+    list, arrayList  - a pair consisting of a list each entry of which is the standard
+                       deviation of the corresponding column of arrList, a list of lists
+                       each entry of which is that entry divided by the standard deviation
                        of the column that that entry is in.
 
-    >>> normalize([[1, 2, 3], [6, 7, 8]]) # doctest:+ELLIPSIS 
+    >>> normalize([[1, 2, 3], [6, 7, 8]]) # doctest:+ELLIPSIS
     ([2.5, 2.5, 2.5],...
-    >>> normalize([[1, 2, 3], [1, 7, 3]]) # doctest:+ELLIPSIS 
+    >>> normalize([[1, 2, 3], [1, 7, 3]]) # doctest:+ELLIPSIS
     ([1, 2.5, 1],...
     >>> normalize([[]])
     ([], [[]])
@@ -188,9 +189,9 @@ def normalize(arrList):
     stdevs = list(map(lambda x: x**0.5, columnwise_means(centered_squared)))
     stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
     inverses = list(map(lambda x: 1/x, stdevs))
-    return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList) 
+    return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import doctest
     doctest.testmod()
