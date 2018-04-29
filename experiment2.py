@@ -1,4 +1,7 @@
 # experiment2.py                                                             Simmons  Spring 18
+#
+# Runs experimen1.py many times and then tabulates and analyzes the resulting slopes and
+# intercepts.
 
 from experiment1 import generate_data
 from Pure_Python_Stats import mean_center, normalize, un_normalize
