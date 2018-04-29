@@ -108,18 +108,18 @@ if __name__ == '__main__':
     #       graphs of the scatterplot with the various lines.
     #       If you don't have matplotlib, have a look at experiment1.png.
 
-    import matplotlib.pyplot as plt
-    xs = [[pair[1]] for pair in xs] # Strip off the column of ones that we added above.
-    xs =  un_center(x_means, un_normalize(x_stdevs, xs)) # Move the point cloud back out to
-    ys =  un_center(y_means, un_normalize(y_stdevs, ys)) # where it was, originally.
-    xs = [x[0] for x in xs] # Convert from list of lists to just list.
-    ys = [y[0] for y in ys] # Same here.
-    plt.scatter(xs, ys)  # Display the scatterplot of the point cloud.
-    plt.plot(xs, [2 * x + 7 for x in xs], color = 'red',\
-                                       label = "The actual line 2x+7.") # Add the line y=2x+7.
-    lbl = '{0:.3f}x + {1:.3f}'.format(m, b) # make a label for the regression line.
-    # Add the regression line found by stochastic gradient descent:
-    plt.plot(xs, [m * x + b for x in xs], color = 'blue',\
-                                                     label = "The regression line "+lbl+".")
-    legend = plt.legend(loc = 'upper left', shadow = True) # Create a legend.
-    plt.show() # Show the graph on the screen.
+    #import matplotlib.pyplot as plt
+    #xs = [[pair[1]] for pair in xs] # Strip off the column of ones that we added above.
+    #xs =  un_center(x_means, un_normalize(x_stdevs, xs)) # Move the point cloud back out to
+    #ys =  un_center(y_means, un_normalize(y_stdevs, ys)) # where it was, originally.
+    #xs = [x[0] for x in xs] # Convert from list of lists to just list.
+    #ys = [y[0] for y in ys] # Same here.
+    #plt.scatter(xs, ys)  # Display the scatterplot of the point cloud.
+    #plt.plot(xs, [2 * x + 7 for x in xs], color = 'red',\
+    #                                   label = "The actual line 2x+7.") # Add the line y=2x+7.
+    #lbl = '{0:.3f}x + {1:.3f}'.format(m, b) # make a label for the regression line.
+    ## Add the regression line found by stochastic gradient descent:
+    #plt.plot(xs, [m * x + b for x in xs], color = 'blue',\
+    #                                                 label = "The regression line "+lbl+".")
+    #legend = plt.legend(loc = 'upper left', shadow = True) # Create a legend.
+    #plt.show() # Show the graph on the screen.
