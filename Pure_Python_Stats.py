@@ -188,11 +188,30 @@ def normalize(arrList):
     inverses = list(map(lambda x: 1/x, stdevs))
     return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList)
 
-def un_normalize(lst, xstdevs, ystdevs):
+def un_center(means, arrList):
+    """
+
+    Args:
+    means - a list of numbers (should be the list output by mean_center)
+    arrList - the (mean-centered) data
+    """
+    return add(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
+
+def un_normalize(stdevs, arrList):
+    """
+
+    Args:
+    stdevs - a list of numbers (should be the list output by normalize)
+    arrList - the (normalized) data
+    """
+    return multiply(scalarMult(stdevs, ones(len(arrList), len(arrList[0]))), arrList)
+
+def un_normalize_slopes(lst, xstdevs, ystdevs):
     assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
      "First and second list have to be the same length; third currently has to be length 1."+\
      " The sizes are: " + str(len(lst)) + ", " +  str(len(xstdevs)) + ", " +  str(len(ystdevs))
     return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
+
 
 
 if __name__ == '__main__':
