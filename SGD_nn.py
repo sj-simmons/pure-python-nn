@@ -1,6 +1,7 @@
 # SGD_nn.py                                                                  Simmons  Spring 18
 #
-# This implements a feed-forward, fully-connected neural net in pure Python.
+# This implements a feed-forward, fully-connected neural net in pure Python that trains using
+# SGD (stochastic gradient descent).
 #
 # Currently (4/29/18) does not support hidden layers.
 
