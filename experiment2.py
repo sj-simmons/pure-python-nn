@@ -1,6 +1,6 @@
 # experiment2.py                                                             Simmons  Spring 18
 #
-# Runs experimen1.py many times and then tabulates and analyzes the resulting slopes and
+# Runs experiment1 many times and then tabulates and analyzes the resulting slopes and
 # intercepts.
 
 from experiment1 import generate_data
