@@ -34,6 +34,9 @@ class Node:
   def setState(self, value):
     self.state = value
 
+  def getState(self):
+    return self.state
+
   def feedforward(self):
 
     # Feedforward from all the inputs to this Node.
@@ -133,6 +136,9 @@ class Net:
 
   def getWeights(self):
     return self.outputNodes[0].getWeights()
+
+  def getOutput(self):
+    return self.outputNodes[0].getState()
 
   # The following two methods allow one to create instances of this class within a
   # Python 'with' statement.
