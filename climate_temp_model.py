@@ -27,10 +27,10 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-# Add a column of ones to the inputs so that computes the bias.
+# Add a column of ones to the inputs so that the neural net has a bias term.
 xs = [[1] + x for x in xs]
 
-# an instance of Net() which accepts 3 inputs (the 2 from the data plus 1 for the bias) and
+# An instance of Net() which accepts 3 inputs (the 2 from the data plus 1 for the bias) and
 # has one output.
 net = Net([3,1])
 
@@ -45,20 +45,21 @@ def printloss(loss, idx, epochs, num_last_lines = 0):
 epochs = 10
 learning_rate = 0.1
 
-for i in range(epochs):
+for i in range(epochs):  # train the neural net
     for j in range(len(xs)):
         net.learn(xs[j], ys[j], learning_rate)
     printloss(net.getTotalError(), i, epochs)
 
 # Get the weights from the trained model.
-weights = net.getWeights() # weights is list of length 3 for these data
+weights = net.getWeights() # Weights is list of length 3 for these data.
 
 # Convert the weights back to those of the un-centered and un-normalized model.
 weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
 
 # Print out the plane found by the neural net.
 print("\nThe least squares regression plane found by the neural net is: "+\
-           "{0:.3f} + {1:.3f}*x1 + {2:.3f}*x2".format(weights[0], weights[1], weights[2]))
+        "{0:.3f} + {1:.3f}*x1 + {2:.3f}*x2".format(weights[0], weights[1], weights[2]), end='')
+print(", where x1 is CO2 and x2 is SolarIrr.")
 
 print("The actual least squares regression plane is:"+\
                                     "                  -11371.838 + 1.147*x1 + 8.047*x2.")
