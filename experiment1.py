@@ -5,8 +5,7 @@
 
 import random
 from SGD_nn import Net
-from Pure_Python_Stats import mean_center, normalize, un_normalize, un_center,\
-                                                                           un_normalize_slopes
+from Pure_Python_Stats import mean_center, normalize, un_center, un_normalize, un_map_weights
 
 def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
     """
@@ -14,20 +13,20 @@ def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
     (which is y = 2x + 7 by default).
 
     The x-values of the points are chosen randomly and uniformly from the interval [0,40].
-    The y-values are chosen by adding to mx+b a error sampled from N(0, 20) (which is the nor-
-    mal distribution with mean 0 and standard deviation stdev(=20 by default).
+    The y-values are chosen by adding to mx+b an error sampled from N(0, 20) (which is the nor-
+    mal distribution with mean 0 and standard deviation stdev(=20 by default)).
 
     The x-values are returned as a list of lists of the form xs = [[x_1], [x_2], ... ].
     The y-values are returned as a list of lists of the form ys = [[y_1], [y_2], ... ].
 
     Args:
-    m - the slope of the line used to generate the point cloud.
-    b - the intercept of that line.
-    stdev - the standard deviation of the normal distribution used generate the errors.
-    num_examples - the number of points in the cloud.
+        m: The slope of the line used to generate the point cloud.
+        b: The intercept of that line.
+        stdev:  The standard deviation of the normal distribution used generate the errors.
+        num_examples: The number of points in the cloud.
 
     Returns:
-    xs, ys - these are both lists of lists.
+        xs, ys: These are both lists of lists.
     """
     xs = []  # this list will hold the x-values
     ys = []  # this one will hold the y-values
@@ -46,9 +45,10 @@ def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
 
 if __name__ == '__main__':
 
+    # Generate some data.
     xs, ys = generate_data(m = 2, b = 7, stdev = 20, num_examples = 20)
 
-    # mean-center and normalize the data
+    # Mean-center and normalize the data.
     x_means, xs = mean_center(xs) # x_means is a list consisting of the means of the cols of xs
     x_stdevs, xs = normalize(xs) # x_stdevs holds the standard deviations of the columns
     y_means, ys = mean_center(ys) # similarly here
@@ -57,10 +57,11 @@ if __name__ == '__main__':
     # Append a column of ones to xs, which computes the bias when training.
     xs = [[1] + x for x in xs]
 
-    # create an instance of the neural net class
+    # Create an instance of the neural net class with 2 inputs (1 x-value plus the bias)
+    # and 1 output.
     net = Net([2,1])
 
-    # An unimportant helper function to sensibly print the current total error.
+    # An un-important helper function to sensibly print the current total error.
     def printloss(loss, idx, epochs, num_last_lines = 0):
         if num_last_lines == 0: num_last_lines = epochs
         if idx < epochs - num_last_lines:
@@ -92,33 +93,33 @@ if __name__ == '__main__':
     # Hence the slope and intercept we are after are:
     #               m = mm * ystdevs / xstdevs, and
     #               b = ymeans - mm* xmeans * ystdevs / xstdevs + bb * ystdevs.
-
-    b = y_means[0] - weights[1] * x_means[0] * y_stdevs[0] / x_stdevs[0]\
-                                                                     + weights[0] * y_stdevs[0]
-
-    # We can scale and translate weights[1:] correctly by using un_normalize as follows:
+    #
+    # We can scale and translate the weights correctly by using un_map_weights as follows:
     # (the next line generalizes to data with more than one input variable):
-    m = un_normalize_slopes(weights[1:], x_stdevs, y_stdevs)[0]
+    weights = un_map_weights(weights, x_means, x_stdevs, y_means, y_stdevs)
+
+    m = weights[1]
+    b = weights[0]
 
     # Print out the line found by the neural net.
     print("\nThe least squares regression line is: y = {0:.3f}*x + {1:.3f}\n". format(m, b))
 
-    # Note: If you have matplotlib install, then you can uncomment the next code block to see
+    # Note: If you have matplotlib installed, then you can uncomment the next code block to see
     #       graphs of the scatterplot with the various lines.
     #       If you don't have matplotlib, have a look at experiment1.png.
 
-    #import matplotlib.pyplot as plt
-    #xs = [[pair[1]] for pair in xs] # Strip off the column of ones that we added above.
-    #xs =  un_center(x_means, un_normalize(x_stdevs, xs)) # Move the point cloud back out to
-    #ys =  un_center(y_means, un_normalize(y_stdevs, ys)) # where it was, originally.
-    #xs = [x[0] for x in xs] # Convert from list of lists to just list.
-    #ys = [y[0] for y in ys] # Same here.
-    #plt.scatter(xs, ys)  # Display the scatterplot of the point cloud.
-    #plt.plot(xs, [2 * x + 7 for x in xs], color = 'red',\
-    #                                   label = "The actual line 2x+7.") # Add the line y=2x+7.
-    #lbl = '{0:.3f}x + {1:.3f}'.format(m, b) # make a label for the regression line.
-    ## Add the regression line found by stochastic gradient descent:
-    #plt.plot(xs, [m * x + b for x in xs], color = 'blue',\
-    #                                                 label = "The regression line "+lbl+".")
-    #legend = plt.legend(loc = 'upper left', shadow = True) # Create a legend.
-    #plt.show() # Show the graph on the screen.
+#    import matplotlib.pyplot as plt
+#    xs = [[pair[1]] for pair in xs] # Strip off the column of ones that we added above.
+#    xs =  un_center(x_means, un_normalize(x_stdevs, xs)) # Move the point cloud back out to
+#    ys =  un_center(y_means, un_normalize(y_stdevs, ys)) # where it was, originally.
+#    xs = [x[0] for x in xs] # Convert from list of lists to just list.
+#    ys = [y[0] for y in ys] # Same here.
+#    plt.scatter(xs, ys)  # Display the scatterplot of the point cloud.
+#    plt.plot(xs, [2 * x + 7 for x in xs], color = 'red',\
+#                                       label = "The actual line 2x+7.") # Add the line y=2x+7.
+#    lbl = '{0:.3f}x + {1:.3f}'.format(m, b) # make a label for the regression line.
+#    # Add the regression line found by stochastic gradient descent:
+#    plt.plot(xs, [m * x + b for x in xs], color = 'blue',\
+#                                                     label = "The regression line "+lbl+".")
+#    legend = plt.legend(loc = 'upper left', shadow = True) # Create a legend.
+#    plt.show() # Show the graph on the screen.
