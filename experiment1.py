@@ -55,7 +55,7 @@ if __name__ == '__main__':
     y_stdevs, ys = normalize(ys) # and here
 
     # Append a column of ones to xs, which computes the bias when training.
-    xs = [[1, x[0]] for x in xs]
+    xs = [[1] + x for x in xs]
 
     # create an instance of the neural net class
     net = Net([2,1])
