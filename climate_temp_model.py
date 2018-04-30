@@ -34,7 +34,7 @@ xs = [[1, x[0], x[1]] for x in xs]
 # has one output.
 net = Net([3,1])
 
-# An unimportant function to sensibly print the current total error.
+# An unimportant helper function to sensibly print the current total error.
 def printloss(loss, idx, epochs, num_last_lines = 0):
     if num_last_lines == 0: num_last_lines = epochs
     if idx < epochs - num_last_lines:
