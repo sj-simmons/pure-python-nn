@@ -60,23 +60,22 @@ if __name__ == '__main__':
     # create an instance of the neural net class
     net = Net([2,1])
 
-    # An unimportant function to print the current total error sensibly
-    def printloss(loss):
-        if j < epochs - 10:
+    # An unimportant helper function to sensibly print the current total error.
+    def printloss(loss, idx, epochs, num_last_lines = 0):
+        if num_last_lines == 0: num_last_lines = epochs
+        if idx < epochs - num_last_lines:
             print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-        elif j == epochs - 10:
-            print('\ncurrent loss: {0:12f}'.format(loss))
         else:
-            print('              {0:12f}'.format(loss))
+            print('current loss: {0:12f}'.format(loss))
 
-    epochs = 10
-    learning_rate = 0.1
+    epochs = 30
+    learning_rate = 0.01
 
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
             net.learn(xs[i], ys[i], learning_rate)
-        printloss(net.getTotalError())
+        printloss(net.getTotalError(), j, epochs)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
     # line found by the neural net.

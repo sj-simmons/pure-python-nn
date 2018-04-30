@@ -4,11 +4,11 @@
 # intercepts.
 
 from experiment1 import generate_data
-from Pure_Python_Stats import mean_center, normalize, un_normalize
+from Pure_Python_Stats import mean_center, normalize, un_map_weights
 from SGD_nn import Net
 from statistics import mean, stdev
 
-def find_least_squares_reg_line(xs, ys, epochs = 10, learning_rate = 0.1):
+def find_least_squares_reg_line(xs, ys, epochs = 20, learning_rate = 0.1):
     """ Return the slope and intercept of the regression line. """
 
     # mean-center and normalize the data
@@ -32,11 +32,8 @@ def find_least_squares_reg_line(xs, ys, epochs = 10, learning_rate = 0.1):
         # line found by the neural net.
         weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
 
-    b = y_means[0] - weights[1] * x_means[0] * y_stdevs[0] / x_stdevs[0]\
-                                                                     + weights[0] * y_stdevs[0]
-    m = un_normalize(weights[1:], x_stdevs, y_stdevs)
-    return m[0], b
-
+    weights = un_map_weights(weights, x_means, x_stdevs, y_means, y_stdevs)
+    return weights[0], weights[1]
 
 num_samples = 5000
 
@@ -49,7 +46,7 @@ for i in range(num_samples):
     xs, ys = generate_data(m = 2, b = 7, stdev = 20, num_examples = 20) # generate data
 
     # Find the least squares reg line using stochastic gradient descent.
-    m, b = find_least_squares_reg_line(xs, ys, epochs = 10, learning_rate = 0.1)
+    b, m = find_least_squares_reg_line(xs, ys, epochs = 30, learning_rate = 0.01)
 
     slopes.append(m) # record slope
     intercepts.append(b) # record intercept
