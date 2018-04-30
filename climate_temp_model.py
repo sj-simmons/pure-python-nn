@@ -28,7 +28,7 @@ ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
 # Add a column of ones to the inputs so that computes the bias.
-xs = [[1, x[0], x[1]] for x in xs]
+xs = [[1] + x for x in xs]
 
 # an instance of Net() which accepts 3 inputs (the 2 from the data plus 1 for the bias) and
 # has one output.
