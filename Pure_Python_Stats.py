@@ -24,7 +24,6 @@ def ones(m,n):
     """
     return m * [n * [1]]
 
-
 def addLists(lst1, lst2):
     """
     Return the elementwise sum of lst1 and lst2.
@@ -34,7 +33,6 @@ def addLists(lst1, lst2):
     """
     assert len(lst1) == len(lst2), "The lists have to be the same length."
     return list(map(lambda tuple_ : tuple_[0] + tuple_[1], zip(lst1, lst2)))
-
 
 def multiplyLists(lst1, lst2):
     """ Return the elementwise product of lst1 and lst2. """
@@ -58,6 +56,14 @@ def divideLists(lst1, lst2):
     assert reduce(lambda x,y: x*y, lst2) != 0, "Second list has entry equal to zero."
     return list(map(lambda tuple_ : tuple_[0] / tuple_[1], zip(lst1, lst2)))
 
+def dotLists(lst1, lst2):
+    """
+    Return the dot product of the vectors defined by lst1 and lst2.
+
+    >>> dotLists([1, 2, 3], [4, 5, 6])
+    32
+    """
+    return reduce(lambda x,y: x+y, [pair[0] * pair[1] for pair in zip(lst1, lst2)])
 
 def scalarMult(lst, arrList):
     """
@@ -141,15 +147,16 @@ def columnwise_means(arrList):
 
 def mean_center(arrList):
     """
-    Mean-center the arrayList.
+    Mean-center the columns of the arrayList.
 
     Args:
-    arrList - a list of lists
+        arrList (a list of lists of numbers)
 
     Returns:
-    list, arrayList  - a pair consisting of a list each entry of which is the mean of the
-                       corresponding column of arrList, a list of lists each entry of which
-                       is that entry minus the mean of the column that that entry is in..
+        list, list: A pair consisting of a list each entry of which is the mean of the
+                    corresponding column of arrList, a list of lists each entry of which
+                    is that entry minus the mean of the column that that entry is in.
+
     >>> mean_center([[1, 2, 3], [6, 7, 8]])
     ([3.5, 4.5, 5.5], [[-2.5, -2.5, -2.5], [2.5, 2.5, 2.5]])
     >>> mean_center([[1, 2, 3], [4, 5, 6]])
@@ -166,13 +173,13 @@ def normalize(arrList):
     Normalize the arrayList.
 
     Args:
-    arrayList - a list of lists
+        arrList (a list of lists of numbers)
 
     Returns:
-    list, arrayList  - a pair consisting of a list each entry of which is the standard
-                       deviation of the corresponding column of arrList, a list of lists
-                       each entry of which is that entry divided by the standard deviation
-                       of the column that that entry is in.
+        list, list: A pair consisting of a list each entry of which is the standard deviation
+                    of the corresponding column of arrList, a list of lists each entry of
+                    which is that entry divided by the standard deviation of the column that
+                    that entry is in.
 
     >>> normalize([[1, 2, 3], [6, 7, 8]]) # doctest:+ELLIPSIS
     ([2.5, 2.5, 2.5],...
@@ -190,19 +197,25 @@ def normalize(arrList):
 
 def un_center(means, arrList):
     """
+    Return an arrayList with ith column un_mean_centered by scalar means[i]
 
     Args:
-    means - a list of numbers (should be the list output by mean_center)
-    arrList - the (mean-centered) data
+        list: A list of numbers (should be the list output by mean_center).
+        list: A list of list of numbers that is the (mean-centered) data.
+    Returns:
+        list: A list of list of numbers.
     """
     return add(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
 
 def un_normalize(stdevs, arrList):
     """
+    Return an arrayList with ith column un_normalized by scalar stdevs[i]
 
     Args:
-    stdevs - a list of numbers (should be the list output by normalize)
-    arrList - the (normalized) data
+        list: A list of numbers (should be the list output by normalize).
+        list: A list of list of numbers that is the (normalized) data.
+    Returns:
+        list: A list of list of numbers.
     """
     return multiply(scalarMult(stdevs, ones(len(arrList), len(arrList[0]))), arrList)
 
@@ -212,6 +225,30 @@ def un_normalize_slopes(lst, xstdevs, ystdevs):
      " The sizes are: " + str(len(lst)) + ", " +  str(len(xstdevs)) + ", " +  str(len(ystdevs))
     return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
 
+def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
+    """
+    Shift weights to those of model trained on mean-centered and normalized data to the
+    weights of the corresponding un-mean-centered, un-normalized model.
+
+    Args:
+        list: A list weights (numbers) with first entry corresponding to the bias.
+        list: A list of the x-variable means (numbers).
+        list: A list of the x-variable standard deviations (numbers).
+        list: A list of the y-variable means (numbers).
+        list: A list of the x-variable standard deviations (numbers).
+    Returns:
+        list: The new weights with the first entry corresponding to the bias.
+
+    Todo:
+        Generalize this to handle more than one y variable.
+    """
+    assert len(xmeans) == len(xstdevs) and \
+           len(ystdevs) == len(ystdevs) == 1,\
+           len(weights) == len(xmeans) + 1
+
+    slopes = un_normalize_slopes(weights[1:], xstdevs, ystdevs)
+    intercept = (weights[0] - dotLists(slopes, xmeans)) + ymeans[0]
+    return [intercept] + slopes
 
 
 if __name__ == '__main__':
