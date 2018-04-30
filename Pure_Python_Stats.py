@@ -135,7 +135,15 @@ def multiply(arrList1, arrList2):
 
 
 def columnwise_means(arrList):
-    """ Return a list consisting of the means of the columns of arrayList. """
+    """ 
+    Return a list consisting of the means of the columns of arrayList. 
+   
+    >>> columnwise_means([[1, 2, 3], [4, 5, 6]])
+    [2.5, 3.5, 4.5]
+    """
+
+    import sys
+    sys.setrecursionlimit(len(arrList)+100)  # quick fix for recursion depth error
 
     def helper(arrList):
         if len(arrList) == 1:
