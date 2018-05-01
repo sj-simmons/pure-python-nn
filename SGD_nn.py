@@ -3,7 +3,9 @@
 # This implements a feed-forward, fully-connected neural net in pure Python that trains using
 # SGD (stochastic gradient descent).
 #
-# Currently (4/29/18) does not support hidden layers.
+# (4/29/18) does not support hidden layers.
+# (4/30/18) now supports a hidden layer but no non-linearity yet; so there currently no benefit
+#           or point in using a hidden layer.
 
 import random
 
@@ -85,8 +87,9 @@ class Net:
     self.hiddenNodes = []
     self.outputNodes = []
 
-    assert len(nodes_per_layer) == 2 and nodes_per_layer[1] == 1,\
-                                          "No hidden layers or multiple ouputs for now!"
+    assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
+    assert nodes_per_layer[-1] == 1, "At most one output for now."
+
     self.nodes_per_layer = nodes_per_layer
 
     # Populate the input nodes
@@ -99,7 +102,7 @@ class Net:
       if verbose:\
           print("populating hidden layer",layer,"with",self.nodes_per_layer[layer],"node(s).")
       for node in range(self.nodes_per_layer[layer]):
-        self.outputNodes.append(Node(self.hiddenNodes))
+        self.hiddenNodes.append(Node(self.inputNodes))
 
     # Populate the ouput layer
     if verbose: print("populating output layer with",self.nodes_per_layer[1],"node(s).")
@@ -109,7 +112,7 @@ class Net:
       else:
         self.outputNodes.append(Node(self.hiddenNodes))
 
-  def learn(self, inputs, outputs, learning_rate = .01):
+  def learn(self, inputs, outputs, learning_rate = .1):
 
     self.forward(inputs)
     self.backprop(outputs, learning_rate)
@@ -121,6 +124,8 @@ class Net:
         " got " + str(len(inputs)) + "."
     for idx in range(len(inputs)): # feed in the inputs
       self.inputNodes[idx].setState(inputs[idx])
+    for node in self.hiddenNodes:
+      node.feedforward()
     for node in self.outputNodes:
       node.feedforward()
 
@@ -135,6 +140,9 @@ class Net:
       node.adjustWeights(outputs, learning_rate)
 
   def getWeights(self):
+    assert len(self.nodes_per_layer) == 2,\
+     "Method getWeights not implemented for networks with hidden layers. You probably don't"+\
+     " really need the weights for those networks."
     return self.outputNodes[0].getWeights()
 
   def getOutput(self):
