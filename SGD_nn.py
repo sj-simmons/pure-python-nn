@@ -10,7 +10,7 @@
 import random
 
 verbose = False
-
+verbose = True
 
 class InputLink:
 
