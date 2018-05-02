@@ -7,9 +7,26 @@
 # (4/30/18) now supports a hidden layer but no non-linearity yet; so there currently no benefit
 #           or point in using a hidden layer.
 
-import random
+import math, random
 
 verbose = False
+
+# Some functions:
+
+def sigmoid(x):
+  """ Return the value of the sigmoid function evaluated at the input x. """
+  return 1 / (1 + math.exp(-x))
+
+def d_sigmoid(y):
+  """
+  Return the deriviative of the sigmoid function above as it depends on the y-value (not the
+  x-value) of a point on the graph of the sigmoid.
+  """
+  return y * (1 - y)
+
+def ReLU(x):
+  """ Rectified Linear Unit """
+  return max(0, x)
 
 
 class InputLink:
@@ -25,7 +42,7 @@ class Node:
   inputs = [] # list of InputLinks
   state = 0
 
-  def __init__(self, nodeList):
+  def __init__(self, nodeList, activation = None):
 
     self.inputs = []
     self.nodeList = nodeList
@@ -39,23 +56,27 @@ class Node:
   def getState(self):
     return self.state
 
-  def feedforward(self):
+  def feedforward(self, activation = None, criterion = 'MSE'):
 
     # Feedforward from all the inputs to this Node.
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
     self.state = sum_
+    if activation == 'sigmoid' or criterion == 'sigmoid':
+      sum_ = sigmoid(sum_)
     if verbose: print("the sum is", sum_)
 
-  def adjustWeights(self, outputs, learning_rate):
+  def adjustWeights(self, outputs, learning_rate, criterion = 'MSE'):
 
     # compute the gradient(s)
     for idx in range(len(outputs)):
       gradient = []
       for inputLink in self.inputs:
-        gradient.append(2 * (self.state - outputs[idx])\
-                                             * inputLink.inputNode.state / len(self.inputs))
+        accum = 2 * (self.state - outputs[idx]) * inputLink.inputNode.state / len(self.inputs)
+        if criterion == 'sigmoid':
+          accum *= d_sigmoid(accum)
+        gradient.append(accum)
     if verbose: print("the gradient is", gradient)
 
     # update weights
@@ -82,15 +103,32 @@ class Net:
   hiddenNodes = []
   outputNodes = []
 
-  def __init__(self, nodes_per_layer):
+  activations = []
+  criterion = ''
+
+  def __init__(self, nodes_per_layer, activations = ['linear'], criterion = 'MSE'):
+    """
+
+    Args:
+      nodes_per_layer (list)
+      activations (List): A list of strings, currently each either 'linear' or 'sigmoid',
+                          one for each hidden layer.
+      criterion (string): Either 'MSE' or 'sigmoid'.  TODO: add 'LogSoftMax'.
+    """
+    self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
     self.hiddenNodes = []
     self.outputNodes = []
+    self.activations = activations
+    self.criterion = criterion
 
     assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-
-    self.nodes_per_layer = nodes_per_layer
+    assert activations[0] in set(['linear','sigmoid']), "No such activation."
+    assert len(activations) == len(nodes_per_layer) - 1,\
+        "Length of activations list should be " + str(len(nodes_per_layer) - 2) + "."
+    assert criterion in set(['MSE', 'sigmoid']),\
+        "Currently, the criterion must be 'MSE or 'sigmoid'."
 
     # Populate the input nodes
     if verbose: print("populating input layer with", self.nodes_per_layer[0],"node(s).")
@@ -102,15 +140,15 @@ class Net:
       if verbose:\
           print("populating hidden layer",layer,"with",self.nodes_per_layer[layer],"node(s).")
       for node in range(self.nodes_per_layer[layer]):
-        self.hiddenNodes.append(Node(self.inputNodes))
+        self.hiddenNodes.append(Node(self.inputNodes, activation = activations[layer]))
 
     # Populate the ouput layer
     if verbose: print("populating output layer with",self.nodes_per_layer[1],"node(s).")
     for node in range(self.nodes_per_layer[-1]):
       if len(self.nodes_per_layer) < 3:  # if no hidden layers
-        self.outputNodes.append(Node(self.inputNodes))
+        self.outputNodes.append(Node(self.inputNodes, activation = None))
       else:
-        self.outputNodes.append(Node(self.hiddenNodes))
+        self.outputNodes.append(Node(self.hiddenNodes, activations[-1]))
 
   def learn(self, inputs, outputs, learning_rate = .1):
 
@@ -127,7 +165,7 @@ class Net:
     for node in self.hiddenNodes:
       node.feedforward()
     for node in self.outputNodes:
-      node.feedforward()
+      node.feedforward(self.activations[0], self.criterion)
 
   def getTotalError(self):
 
@@ -137,7 +175,7 @@ class Net:
   def backprop(self, outputs, learning_rate):
 
     for node in self.outputNodes:
-      node.adjustWeights(outputs, learning_rate)
+      node.adjustWeights(outputs, learning_rate, self.criterion)
 
   def getWeights(self):
     assert len(self.nodes_per_layer) == 2,\
@@ -154,7 +192,7 @@ class Net:
   # instance of Net() and train it only once, as in experiment1.py.
   # But if you want to instantiate an instance and re-use in multiple times, as in
   # experiment1.py, then, technically, one does well to clean things up in-between
-  # re-uses by employing a 'with' statement. (See experiment1.py).
+  # re-uses by employing a 'with' statement. (See experiment2.py).
   # This has to do with the way garbage collection works in Python: specifically,
   # objects are deleted not when the go our of scope but when all references to
   # them have been removed.
@@ -166,3 +204,5 @@ class Net:
     self.inputNodes = []
     self.hiddenNodes = []
     self.outputNodes = []
+    activations = []
+    criterion = ''
