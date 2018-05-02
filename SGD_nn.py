@@ -6,10 +6,14 @@
 # (4/29/18) does not support hidden layers.
 # (4/30/18) now supports a hidden layer but no non-linearity yet; so there currently no benefit
 #           or point in using a hidden layer.
+# (5/2/18) Should now work with TWO-layer networks with ONE output node with criterion either
+#          MSE (Mean Squared Error) of sigmoid (poor's mans softmax).
+#          TODO:  Allow a single hidden layer with either sigmoid or linear activations.
+#          TODO:  Allow mulitple output with a logsoftmax criterion.
 
 import math, random
 
-verbose = False
+verbose = True
 
 # Some functions:
 
@@ -20,7 +24,7 @@ def sigmoid(x):
 def d_sigmoid(y):
   """
   Return the deriviative of the sigmoid function above as it depends on the y-value (not the
-  x-value) of a point on the graph of the sigmoid.
+  x-value) of a point on the graph of the sigmoid function y = sigmoid(x).
   """
   return y * (1 - y)
 
@@ -62,9 +66,9 @@ class Node:
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
-    self.state = sum_
     if activation == 'sigmoid' or criterion == 'sigmoid':
       sum_ = sigmoid(sum_)
+    self.state = sum_
     if verbose: print("the sum is", sum_)
 
   def adjustWeights(self, outputs, learning_rate, criterion = 'MSE'):
@@ -73,10 +77,10 @@ class Node:
     for idx in range(len(outputs)):
       gradient = []
       for inputLink in self.inputs:
-        accum = 2 * (self.state - outputs[idx]) * inputLink.inputNode.state / len(self.inputs)
-        if criterion == 'sigmoid':
-          accum *= d_sigmoid(accum)
-        gradient.append(accum)
+        if criterion == 'MSE':
+          gradient.append((self.state - outputs[idx]) * inputLink.inputNode.state)
+        elif criterion == 'sigmoid':
+          gradient.append((d_sigmoid((self.state - outputs[idx])) * (self.state - outputs[idx]) * inputLink.inputNode.state))
     if verbose: print("the gradient is", gradient)
 
     # update weights
@@ -84,11 +88,13 @@ class Node:
       self.inputs[idx].weight -= learning_rate * gradient[idx]
 
   def getWeights(self):
+
     weights = []
     for node in self.inputs:
       weights.append(node.weight)
     return weights
 
+  # Note: it's fine to use sum squared error even for sigmoid criterion.
   def getTotalError(self):
     sum_squared_error = 0
     for inputLink in self.inputs:
@@ -131,19 +137,19 @@ class Net:
         "Currently, the criterion must be 'MSE or 'sigmoid'."
 
     # Populate the input nodes
-    if verbose: print("populating input layer with", self.nodes_per_layer[0],"node(s).")
+    if verbose: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
     for node in range(self.nodes_per_layer[0]):
       self.inputNodes.append(Node([]))
 
     # Populate the hidden layers
     for layer in range(1,len(self.nodes_per_layer)-1):
       if verbose:\
-          print("populating hidden layer",layer,"with",self.nodes_per_layer[layer],"node(s).")
+        print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
       for node in range(self.nodes_per_layer[layer]):
         self.hiddenNodes.append(Node(self.inputNodes, activation = activations[layer]))
 
     # Populate the ouput layer
-    if verbose: print("populating output layer with",self.nodes_per_layer[1],"node(s).")
+    if verbose: print("populating output layer with", self.nodes_per_layer[1], "node(s).")
     for node in range(self.nodes_per_layer[-1]):
       if len(self.nodes_per_layer) < 3:  # if no hidden layers
         self.outputNodes.append(Node(self.inputNodes, activation = None))
@@ -165,7 +171,7 @@ class Net:
     for node in self.hiddenNodes:
       node.feedforward()
     for node in self.outputNodes:
-      node.feedforward(self.activations[0], self.criterion)
+      node.feedforward(criterion = self.criterion)
 
   def getTotalError(self):
 
