@@ -13,7 +13,7 @@
 
 import math, random
 
-verbose = True
+verbose = False
 
 # Some functions:
 
