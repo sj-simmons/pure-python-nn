@@ -24,7 +24,7 @@ def sigmoid(x):
 def d_sigmoid(y):
   """
   Return the deriviative of the sigmoid function above as it depends on the y-value (not the
-  x-value) of a point on the graph of the sigmoid function y = sigmoid(x).
+  x-value) of a point on the graph of the sigmoid function: y = sigmoid(x).
   """
   return y * (1 - y)
 
@@ -169,7 +169,7 @@ class Net:
     for idx in range(len(inputs)): # feed in the inputs
       self.inputNodes[idx].setState(inputs[idx])
     for node in self.hiddenNodes:
-      node.feedforward()
+      node.feedforward(activation = self.activations[0])
     for node in self.outputNodes:
       node.feedforward(criterion = self.criterion)
 
