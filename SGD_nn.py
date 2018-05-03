@@ -68,7 +68,7 @@ class Node:
       sum_ += inputLink.weight * inputLink.inputNode.state
     if activation == 'sigmoid' or criterion == 'sigmoid':
       sum_ = sigmoid(sum_)
-    self.state = sum_
+    self.setState(sum_)
     if verbose: print("the sum is", sum_)
 
   def adjustWeights(self, outputs, learning_rate, criterion = 'MSE'):
@@ -94,13 +94,6 @@ class Node:
       weights.append(node.weight)
     return weights
 
-  # Note: it's fine to use sum squared error even for sigmoid criterion.
-  def getTotalError(self):
-    sum_squared_error = 0
-    for inputLink in self.inputs:
-      sum_squared_error += (self.state - inputLink.inputNode.state)**2 / len(self.inputs)
-    return sum_squared_error
-
 
 class Net:
 
@@ -112,8 +105,9 @@ class Net:
   activations = []
   criterion = ''
 
-  def __init__(self, nodes_per_layer, activations = ['linear'], criterion = 'MSE'):
+  def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE'):
     """
+    A neural network class.
 
     Args:
       nodes_per_layer (list)
@@ -130,11 +124,12 @@ class Net:
 
     assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-    assert activations[0] in set(['linear','sigmoid']), "No such activation."
-    assert len(activations) == len(nodes_per_layer) - 1,\
-        "Length of activations list should be " + str(len(nodes_per_layer) - 2) + "."
     assert criterion in set(['MSE', 'sigmoid']),\
         "Currently, the criterion must be 'MSE or 'sigmoid'."
+    if len(nodes_per_layer) > 2:
+      assert activations[0] in set([None, 'sigmoid']), "No such activation."
+      assert len(activations) == len(nodes_per_layer) - 2,\
+        "Length of activations list should be " + str(len(nodes_per_layer) - 2) + "."
 
     # Populate the input nodes
     if verbose: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
@@ -142,7 +137,7 @@ class Net:
       self.inputNodes.append(Node([]))
 
     # Populate the hidden layers
-    for layer in range(1,len(self.nodes_per_layer)-1):
+    for layer in range(1,len(self.nodes_per_layer)-2):
       if verbose:\
         print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
       for node in range(self.nodes_per_layer[layer]):
@@ -173,10 +168,22 @@ class Net:
     for node in self.outputNodes:
       node.feedforward(criterion = self.criterion)
 
-  def getTotalError(self):
+  def getTotalError(self, inputs, outputs):
+    """ 
+    Return the total mean squared error over of all input/outputs pairs.
+  
+    Args:
+      inputs (list of lists):
+      outputs (list of lists):
+    """
+    assert len(inputs) == len(outputs), "Length on inputs and outputs must be equal."
 
-    for idx in range(len(self.outputNodes)):
-      return self.outputNodes[idx].getTotalError()
+    total_error = 0
+    for input in inputs:
+      self.forward(input)
+      for idx in range(len(self.outputNodes)):
+        total_error += (self.getOutput() - outputs[idx][0])**2
+    return total_error / len(inputs)
 
   def backprop(self, outputs, learning_rate):
 
@@ -184,13 +191,18 @@ class Net:
       node.adjustWeights(outputs, learning_rate, self.criterion)
 
   def getWeights(self):
+
     assert len(self.nodes_per_layer) == 2,\
      "Method getWeights not implemented for networks with hidden layers. You probably don't"+\
      " really need the weights for those networks."
     return self.outputNodes[0].getWeights()
 
   def getOutput(self):
-    return self.outputNodes[0].getState()
+
+    output = self.outputNodes[0].getState()
+    if self.criterion == 'sigmoid':
+      output = sigmoid(output)
+    return output
 
   # The following two methods allow one to create instances of this class within a
   # Python 'with' statement.
@@ -204,9 +216,11 @@ class Net:
   # them have been removed.
 
   def __enter__(self):
+
     return self
 
   def __exit__(self, *args):
+
     self.inputNodes = []
     self.hiddenNodes = []
     self.outputNodes = []

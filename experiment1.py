@@ -76,7 +76,7 @@ if __name__ == '__main__':
     for j in range(epochs):
         for i in range(len(xs)):
             net.learn(xs[i], ys[i], learning_rate)
-        printloss(net.getTotalError(), j, epochs)
+        printloss(net.getTotalError(xs, ys), j, epochs)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
     # line found by the neural net.
