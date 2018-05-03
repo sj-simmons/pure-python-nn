@@ -23,8 +23,8 @@ def sigmoid(x):
 
 def d_sigmoid(y):
   """
-  Return the deriviative of the sigmoid function above as it depends on the y-value (not the
-  x-value) of a point on the graph of the sigmoid function: y = sigmoid(x).
+  Return the deriviative of the sigmoid function as it depends on the y-value (not the x-value)
+  of a point on the graph of the sigmoid function: y = sigmoid(x).
   """
   return y * (1 - y)
 
@@ -42,14 +42,21 @@ class InputLink:
 
 
 class Node:
+  """
+    A Node in a neural network.
 
-  inputs = [] # list of InputLinks
-  state = 0
+    Attributes:
+      inputs: a list of instances of InputLists representing all the Nodes in the neural net
+              the 'feed into' this node.
+      state: a number.  Note: for an output node this is the state BEFORE the criterion is
+             applied.  
+  """
 
   def __init__(self, nodeList, activation = None):
 
     self.inputs = []
     self.nodeList = nodeList
+    self.state = 0
     if verbose: print("  node created")
     for node in nodeList:
       self.inputs.append(InputLink(node, random.random() - 0.5))
@@ -60,14 +67,12 @@ class Node:
   def getState(self):
     return self.state
 
-  def feedforward(self, activation = None, criterion = 'MSE'):
+  def feedforward(self, activation = None):
 
     # Feedforward from all the inputs to this Node.
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
-    if activation == 'sigmoid' or criterion == 'sigmoid':
-      sum_ = sigmoid(sum_)
     self.setState(sum_)
     if verbose: print("the sum is", sum_)
 
@@ -80,7 +85,8 @@ class Node:
         if criterion == 'MSE':
           gradient.append((self.state - outputs[idx]) * inputLink.inputNode.state)
         elif criterion == 'sigmoid':
-          gradient.append((d_sigmoid((self.state - outputs[idx])) * (self.state - outputs[idx]) * inputLink.inputNode.state))
+          gradient.append((sigmoid(self.state) - outputs[idx]) * d_sigmoid(self.state) *\
+                                                                     inputLink.inputNode.state)
     if verbose: print("the gradient is", gradient)
 
     # update weights
@@ -97,19 +103,11 @@ class Node:
 
 class Net:
 
-  nodes_per_layer = []
-  inputNodes = []
-  hiddenNodes = []
-  outputNodes = []
-
-  activations = []
-  criterion = ''
-
   def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE'):
     """
     A neural network class.
 
-    Args:
+    Attributes
       nodes_per_layer (list)
       activations (List): A list of strings, currently each either 'linear' or 'sigmoid',
                           one for each hidden layer.
@@ -166,7 +164,7 @@ class Net:
     for node in self.hiddenNodes:
       node.feedforward(activation = self.activations[0])
     for node in self.outputNodes:
-      node.feedforward(criterion = self.criterion)
+      node.feedforward()
 
   def getTotalError(self, inputs, outputs):
     """ 
