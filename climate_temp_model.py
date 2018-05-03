@@ -48,7 +48,7 @@ learning_rate = 0.1
 for i in range(epochs):  # train the neural net
     for j in range(len(xs)):
         net.learn(xs[j], ys[j], learning_rate)
-    printloss(net.getTotalError(), i, epochs)
+    printloss(net.getTotalError(xs, ys), i, epochs, 30)
 
 # Get the weights from the trained model.
 weights = net.getWeights() # Weights is list of length 3 for these data.
