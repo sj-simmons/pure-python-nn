@@ -42,7 +42,7 @@ def printloss(loss, idx, epochs, num_last_lines = 0):
     else:
         print('current loss: {0:12f}'.format(loss))
 
-epochs = 10
+epochs = 30
 learning_rate = 0.1
 
 for i in range(epochs):  # train the neural net
