@@ -44,6 +44,8 @@ with open('ames_small.csv') as csvfile:
 # Note: the xs and ys are already list of lists, as we need them to be to use the Net class
 #       in SDG_nn.py
 
+original_ys = ys # save a copy of the original ys for later
+
 # Now mean_center and normalize the data, saving the means and standard deviations of both
 # input variable and the output variable.
 
@@ -81,6 +83,7 @@ weights = net.getWeights() # Weights is list of length 14 for these data.
 # Convert the weights back to those of the un-centered and un-normalized model.
 weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
 
+print("The intercept is", weights[0])
 # Print out the plane found by the neural net.
 print("\nThe least squares regression plane found by the neural net is: "+\
         ' + '.join('{0:.3f}*x{1}'.format(weights[i], i) for i in range(1, len(weights))), end='\n')
@@ -88,8 +91,16 @@ print ("\nWhere:\n "+\
         ' \n '.join('x{1} is {0}'.format(labels[i], i) for i in range(1, len(weights))), end='\n')
 #print(", where x1 is CO2 and x2 is SolarIrr.")
 
-#print("The actual least squares regression plane is:"+\
-#                                    "                  -11371.838 + 1.147*x1 + 8.047*x2.")
-
 print ('Testing with ames_small.csv')
-test('ames_small.csv', net)
+#test('ames_small.csv', net)
+
+from Pure_Python_Stats import dotLists
+
+for i in range(len(xs)):
+    net.forward(xs[i])
+    out = net.getOutput()
+    out = ymeans[0] + out * ystdevs[0]
+    err = original_ys[i][0] - out
+    print('Predicted: {1:.2f}\tActual: {0}\tError: {2}\n'.format(original_ys[i][0], out, err))
+
+
