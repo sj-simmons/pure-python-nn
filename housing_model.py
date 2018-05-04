@@ -25,10 +25,8 @@ net = Net([14,1])
 
 def printloss(loss, idx, epochs, num_last_lines = 0):
     if num_last_lines == 0: num_last_lines = epochs
-    if idx < epochs - num_last_lines:
-        print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else:
-        print('current loss: {0:12f}'.format(loss))
+    if idx < epochs - num_last_lines: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+    else: print('current loss: {0:12f}'.format(loss))
 
 epochs = 30
 learning_rate = 0.01
@@ -49,9 +47,18 @@ for i in range(len(ys)):
 print('\n1-SSE/SST =', 1.0-SS_E/SS_T)
 print()
 
+weights = net.getWeights()
+weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
+
+for i in range(len(ys)):
+  dotprod = dotLists(xs[i], weights)
+  net.forward(xs[i])
+  out = net.getOutput()
+  out = ymeans[0] + out * ystdevs[0]
+  print(dotprod, out, dotprod - out)
+  print()
+
 
 # Now make a prediction
-#weights = net.getWeights()
-#weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
 #house_to_be_assessed = [2855, 0, 26690, 8, 7, 1652, 1972, 1040, 2080, 1756, 8, 841, 2]
 #print('\nestimated value: ${:,.2f}'.format(weights[0]+dotLists(weights[1:],house_to_be_assessed)))
