@@ -239,11 +239,11 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
     weights of the corresponding un-mean-centered, un-normalized model.
 
     Args:
-        list: A list weights (numbers) with first entry corresponding to the bias.
+        list: A list of weights (numbers) with first entry corresponding to the bias.
         list: A list of the x-variable means (numbers).
         list: A list of the x-variable standard deviations (numbers).
         list: A list of the y-variable means (numbers).
-        list: A list of the x-variable standard deviations (numbers).
+        list: A list of the y-variable standard deviations (numbers).
     Returns:
         list: The new weights with the first entry corresponding to the bias.
 
@@ -255,7 +255,7 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
            len(weights) == len(xmeans) + 1
 
     slopes = un_normalize_slopes(weights[1:], xstdevs, ystdevs)
-    intercept = (weights[0] - dotLists(slopes, xmeans)) + ymeans[0]
+    intercept = weights[0] * ystdev[0] - dotLists(slopes, xmeans) + ymeans[0]
     return [intercept] + slopes
 
 
