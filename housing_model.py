@@ -50,8 +50,8 @@ print('\n1-SSE/SST =', 1.0-SS_E/SS_T)
 print()
 
 
-## Now make a prediction
-#weights = net.getWeights() 
+# Now make a prediction
+#weights = net.getWeights()
 #weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
 #house_to_be_assessed = [2855, 0, 26690, 8, 7, 1652, 1972, 1040, 2080, 1756, 8, 841, 2]
 #print('\nestimated value: ${:,.2f}'.format(weights[0]+dotLists(weights[1:],house_to_be_assessed)))
