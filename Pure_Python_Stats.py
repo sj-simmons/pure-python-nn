@@ -255,7 +255,7 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
            len(weights) == len(xmeans) + 1
 
     slopes = un_normalize_slopes(weights[1:], xstdevs, ystdevs)
-    intercept = weights[0] * ystdev[0] - dotLists(slopes, xmeans) + ymeans[0]
+    intercept = weights[0] * ystdevs[0] - dotLists(slopes, xmeans) + ymeans[0]
     return [intercept] + slopes
 
 
