@@ -192,15 +192,15 @@ def normalize(arrList):
     >>> normalize([[1, 2, 3], [6, 7, 8]]) # doctest:+ELLIPSIS
     ([2.5, 2.5, 2.5],...
     >>> normalize([[1, 2, 3], [1, 7, 3]]) # doctest:+ELLIPSIS
-    ([1, 2.5, 1],...
+    ([0.0, 2.5, 0.0],...
     >>> normalize([[]])
     ([], [[]])
     """
     _, centered = mean_center(arrList)
     centered_squared = multiply(centered, centered)
     stdevs = list(map(lambda x: x**0.5, columnwise_means(centered_squared)))
-    stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
-    inverses = list(map(lambda x: 1/x, stdevs))
+    nonzero_stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
+    inverses = list(map(lambda x: 1/x, nonzero_stdevs))
     return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList)
 
 def un_center(means, arrList):
