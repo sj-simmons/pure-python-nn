@@ -30,4 +30,11 @@ Code summary:
     TODO: 
     * Implement mini-batch gradient descent.
   * [PurePythonStats.py](PurePythonStats.py): This is small library of functions, written in pure Python,
-    that are useful, for example, for mean_centering and normalizing data in the form of lists of lists.
+    that are useful, for example, for mean-centering and normalizing data in the form of lists of lists.
+
+Data sets:
+  * [titanic_train.csv](titanic_train.csv) -- Branton's original Titanic training set.
+  * [titanic_test.csv](titanic_test.csv) -- Branton's original Titanic test set.
+  * [titanic_numeric_train.csv](titanic_numeric_train.csv) -- same as Branton's original training set but with numeric fields.
+  * [titanic_numeric_test.csv](titanic_numeric_test.csv) -- same as Branton's original test set but with numeric fields.
+  * [titanic_to_numeric.py](titanic_to_numeric.py) -- this was used to generate the *numeric* versions. (Uses `pandas`.)
