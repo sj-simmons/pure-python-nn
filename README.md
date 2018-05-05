@@ -29,6 +29,9 @@ Code summary:
 
     TODO: 
     * Implement mini-batch gradient descent.
+    * Implement a single hidden layer.
+    * Implement multiple outputs and logSoftMax.
+    * Implement a multiple hidden layers.
   * [Pure_Python_Stats.py](Pure_Python_Stats.py): This is small library of functions, written in pure Python,
     that are useful, for example, for mean-centering and normalizing data in the form of lists of lists.
 
