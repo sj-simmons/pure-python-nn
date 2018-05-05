@@ -65,14 +65,14 @@ def dotLists(lst1, lst2):
     """
     return reduce(lambda x,y: x+y, [pair[0] * pair[1] for pair in zip(lst1, lst2)])
 
-def scalarMult(lst, arrList):
+def scalarMultCols(lst, arrList):
     """
-    Return arrList with the first column multiplied by the first element of lst, the second
-    column multiplied by the second element of lst, and so on.
+    Return arrList with the first column scalar multiplied by the first element of lst, the 
+    second column scalar multiplied by the second element of lst, and so on.
 
-    >>> scalarMult([2], [[1], [2], [3]])
+    >>> scalarMultCols([2], [[1], [2], [3]])
     [[2], [4], [6]]
-    >>> scalarMult([2, 3], [[1, 4], [2, 5], [3, 6]])
+    >>> scalarMultCols([2, 3], [[1, 4], [2, 5], [3, 6]])
     [[2, 12], [4, 15], [6, 18]]
     """
     assert len(lst) == len(arrList[0]), \
@@ -111,7 +111,7 @@ def subtract(arrList1, arrList2):
     >>> subtract([[]], [[]])
     [[]]
     """
-    return add(arrList1, scalarMult([-1]*len(arrList2[0]), arrList2))
+    return add(arrList1, scalarMultCols([-1]*len(arrList2[0]), arrList2))
 
 
 def multiply(arrList1, arrList2):
@@ -173,64 +173,80 @@ def mean_center(arrList):
     ([], [[]])
     """
     means = columnwise_means(arrList) # a list holding the means of the columns of arrList
-    arrList = subtract(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
+    arrList = subtract(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
     return means, arrList
 
 def normalize(arrList):
     """
-    Normalize the arrayList.
+    Normalize the arrayList, meaning divide each column by its standard deviation if that
+    standard deviation is nonzero, and leave the column unmodified if it's standard deviation
+    is zero.
+
+    Note: Columns 
 
     Args:
         arrList (a list of lists of numbers)
 
     Returns:
         list, list: A pair consisting of a list each entry of which is the standard deviation
-                    of the corresponding column of arrList, a list of lists each entry of
-                    which is that entry divided by the standard deviation of the column that
-                    that entry is in.
+                    of the corresponding column of arrList, and an arrayList (a list of lists)
+                    each column of which is that column divided by the standard deviation of 
+                    the column that column if that standard deviation is nonzero.  Columns
+                    with zero standard deviation are left unchanged.
 
     >>> normalize([[1, 2, 3], [6, 7, 8]]) # doctest:+ELLIPSIS
     ([2.5, 2.5, 2.5],...
     >>> normalize([[1, 2, 3], [1, 7, 3]]) # doctest:+ELLIPSIS
-    ([1, 2.5, 1],...
+    ([0.0, 2.5, 0.0],...
     >>> normalize([[]])
     ([], [[]])
     """
     _, centered = mean_center(arrList)
     centered_squared = multiply(centered, centered)
     stdevs = list(map(lambda x: x**0.5, columnwise_means(centered_squared)))
-    stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
-    inverses = list(map(lambda x: 1/x, stdevs))
-    return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList)
+    nonzero_stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
+    inverses = list(map(lambda x: 1/x, nonzero_stdevs))
+    return stdevs, scalarMultCols(inverses, arrList)
 
 def un_center(means, arrList):
     """
     Return an arrayList with ith column un_mean_centered by scalar means[i]
 
     Args:
-        list: A list of numbers (should be the list output by mean_center).
-        list: A list of list of numbers that is the (mean-centered) data.
+        means: A list of numbers (should be the list output by mean_center).
+        arrList: A list of list of numbers that is the (mean-centered) data.
     Returns:
         list: A list of list of numbers.
     """
-    return add(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
+    return add(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
 
 def un_normalize(stdevs, arrList):
     """
-    Return an arrayList with ith column un_normalized by scalar stdevs[i]
+    Return an arrayList with ith column multiplied by scalar stdevs[i] if stdevs[i] is not zero,
+    and unmodified if it is zero.
 
     Args:
-        list: A list of numbers (should be the list output by normalize).
-        list: A list of list of numbers that is the (normalized) data.
+        stdevs: A list of numbers (should be the list output by normalize).
+        arrList: A list of list of numbers that is the (normalized) data.
     Returns:
         list: A list of list of numbers.
+
+    >>> un_normalize([0.5, 2],[[1, 2], [3,4]])
+    [[0.5, 4], [1.5, 8]]
+    >>> un_normalize([0.0, 2],[[1, 2], [3,4]])
+    [[1, 4], [3, 8]]
     """
-    return multiply(scalarMult(stdevs, ones(len(arrList), len(arrList[0]))), arrList)
+    stdevs = list(map(lambda x: x if x != 0.0 else 1, stdevs))
+    return scalarMultCols(stdevs, arrList)
 
 def un_normalize_slopes(lst, xstdevs, ystdevs):
+    """ Helper function for un_map_weights below. """
+
     assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
      "First and second list have to be the same length; third currently has to be length 1."+\
      " The sizes are: " + str(len(lst)) + ", " +  str(len(xstdevs)) + ", " +  str(len(ystdevs))
+
+    xstdevs = list(map(lambda x: x if x != 0.0 else 1, xstdevs))
     return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
 
 def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
@@ -238,12 +254,15 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
     Shift weights to those of model trained on mean-centered and normalized data to the
     weights of the corresponding un-mean-centered, un-normalized model.
 
+    Note: This is only useful for getting the coefficients for writing the regression plane
+          in _linear_ regression.
+
     Args:
-        list: A list of weights (numbers) with first entry corresponding to the bias.
-        list: A list of the x-variable means (numbers).
-        list: A list of the x-variable standard deviations (numbers).
-        list: A list of the y-variable means (numbers).
-        list: A list of the y-variable standard deviations (numbers).
+        weights: A list of weights (numbers) with first entry corresponding to the bias.
+        xmeans: A list of the x-variable means (numbers).
+        xstdevs: A list of the x-variable standard deviations (numbers).
+        ymeans: A list of the y-variable means (numbers).
+        ystdevs: A list of the y-variable standard deviations (numbers).
     Returns:
         list: The new weights with the first entry corresponding to the bias.
 
@@ -252,10 +271,10 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
     """
     assert len(xmeans) == len(xstdevs) and \
            len(ystdevs) == len(ystdevs) == 1,\
-           len(weights) == len(xmeans) + 1
+           len(weights) == len(xmeans)
 
-    slopes = un_normalize_slopes(weights[1:], xstdevs, ystdevs)
-    intercept = weights[0] * ystdevs[0] - dotLists(slopes, xmeans) + ymeans[0]
+    slopes = un_normalize_slopes(weights, xstdevs, ystdevs)
+    intercept = ymeans[0] - dotLists(slopes, xmeans)
     return [intercept] + slopes
 
 

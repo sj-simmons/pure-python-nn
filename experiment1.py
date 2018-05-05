@@ -54,12 +54,9 @@ if __name__ == '__main__':
     y_means, ys = mean_center(ys) # similarly here
     y_stdevs, ys = normalize(ys) # and here
 
-    # Append a column of ones to xs, which computes the bias when training.
-    xs = [[1] + x for x in xs]
-
-    # Create an instance of the neural net class with 2 inputs (1 x-value plus the bias)
-    # and 1 output.
-    net = Net([2,1])
+    # Create an instance of the neural net class with 1 input and 1 output, no hidden layer,
+    # no activation function, mean squared error criterion.
+    net = Net([1,1], criterion = 'MSE')
 
     # An un-important helper function to sensibly print the current total error.
     def printloss(loss, idx, epochs, num_last_lines = 0):
