@@ -36,24 +36,36 @@ for i in range(epochs):
         net.learn(xs[j], ys[j], learning_rate)
     printloss(net.getTotalError(xs, ys), i, epochs, 40)
 
-def compute_r_squared(xs, ys):
+
+def compute_r_squared(xs, ys, net):
     """ 
     Return 1-SSE/SST which is the proportion of the variance in the data explained by the
     regression hyper-plane.
     """
     SS_E = 0.0;  SS_T = 0.0
-    ymean,_ = mean_center(ys)  # mean of the output variable (which is zero if data is mean-centered)
+
+    from Pure_Python_Stats import columnwise_means
+    ymean = columnwise_means(ys)  # mean of the output variable (which is zero if data is mean-centered)
+
     for i in range(len(ys)):
       net.forward(xs[i])
       out = net.getOutput()
       SS_E = SS_E + (ys[i][0] - out )**2
       SS_T = SS_T + (ys[i][0] - ymean[0])**2
+
     return 1.0-SS_E/SS_T
 
-print('\n1-SSE/SST =', compute_r_squared(xs, ys))
+print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
 
+print("xmeans",xmeans)
+print("xstdevs",xstdevs)
+print("ymeans",ymeans)
+print("ystdevs",ystdevs)
 weights = net.getWeights()
+print(weights)
 weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
+print(weights)
+exit()
 
 for i in range(len(xs)):
   dotprod = dotLists(xs[i], weights)
