@@ -213,8 +213,8 @@ def un_center(means, arrList):
     Return an arrayList with ith column un_mean_centered by scalar means[i]
 
     Args:
-        list: A list of numbers (should be the list output by mean_center).
-        list: A list of list of numbers that is the (mean-centered) data.
+        means: A list of numbers (should be the list output by mean_center).
+        arrList: A list of list of numbers that is the (mean-centered) data.
     Returns:
         list: A list of list of numbers.
     """
@@ -226,8 +226,8 @@ def un_normalize(stdevs, arrList):
     and unmodified if it is zero.
 
     Args:
-        list: A list of numbers (should be the list output by normalize).
-        list: A list of list of numbers that is the (normalized) data.
+        stdevs: A list of numbers (should be the list output by normalize).
+        arrList: A list of list of numbers that is the (normalized) data.
     Returns:
         list: A list of list of numbers.
 
@@ -240,11 +240,13 @@ def un_normalize(stdevs, arrList):
     return scalarMultCols(stdevs, arrList)
 
 def un_normalize_slopes(lst, xstdevs, ystdevs):
+    """ Helper function for un_map_weights below. """
 
     assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
      "First and second list have to be the same length; third currently has to be length 1."+\
      " The sizes are: " + str(len(lst)) + ", " +  str(len(xstdevs)) + ", " +  str(len(ystdevs))
 
+    xstdevs = list(map(lambda x: x if x != 0.0 else 1, xstdevs))
     return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
 
 def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
@@ -252,12 +254,15 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
     Shift weights to those of model trained on mean-centered and normalized data to the
     weights of the corresponding un-mean-centered, un-normalized model.
 
+    Note: This is only useful for getting the coefficients for writing the regression plane
+          in _linear_ regression.
+
     Args:
-        list: A list of weights (numbers) with first entry corresponding to the bias.
-        list: A list of the x-variable means (numbers).
-        list: A list of the x-variable standard deviations (numbers).
-        list: A list of the y-variable means (numbers).
-        list: A list of the y-variable standard deviations (numbers).
+        weights: A list of weights (numbers) with first entry corresponding to the bias.
+        xmeans: A list of the x-variable means (numbers).
+        xstdevs: A list of the x-variable standard deviations (numbers).
+        ymeans: A list of the y-variable means (numbers).
+        ystdevs: A list of the y-variable standard deviations (numbers).
     Returns:
         list: The new weights with the first entry corresponding to the bias.
 
@@ -266,10 +271,10 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
     """
     assert len(xmeans) == len(xstdevs) and \
            len(ystdevs) == len(ystdevs) == 1,\
-           len(weights) == len(xmeans) + 1
+           len(weights) == len(xmeans)
 
-    slopes = un_normalize_slopes(weights[1:], xstdevs, ystdevs)
-    intercept = weights[0] * ystdevs[0] - dotLists(slopes, xmeans) + ymeans[0]
+    slopes = un_normalize_slopes(weights, xstdevs, ystdevs)
+    intercept = ymeans[0] - dotLists(slopes, xmeans)
     return [intercept] + slopes
 
 
