@@ -21,10 +21,12 @@ Code summary:
     * `Node` -- essentially a list of instances of `InputLinks` along with some methods.
     * `InputLink` -- a small class with attributes `weight` and `inputNode`, instances of which connect the
       instances of Node that make up the `Net`.
+
     Notes: 
     * The inputs and outputs to an instance of Net are assumed to be lists of list, one list for
       each example in the data set.
     * The `Net` class currently trains using SGD (stochastic gradient descent). 
+
     TODO: 
     * Implement mini-batch gradient descent.
   * [PurePythonStats.py](PurePythonStats.py): This is small library of functions, written in pure Python,
