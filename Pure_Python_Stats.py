@@ -65,14 +65,14 @@ def dotLists(lst1, lst2):
     """
     return reduce(lambda x,y: x+y, [pair[0] * pair[1] for pair in zip(lst1, lst2)])
 
-def scalarMult(lst, arrList):
+def scalarMultCols(lst, arrList):
     """
-    Return arrList with the first column multiplied by the first element of lst, the second
-    column multiplied by the second element of lst, and so on.
+    Return arrList with the first column scalar multiplied by the first element of lst, the 
+    second column scalar multiplied by the second element of lst, and so on.
 
-    >>> scalarMult([2], [[1], [2], [3]])
+    >>> scalarMultCols([2], [[1], [2], [3]])
     [[2], [4], [6]]
-    >>> scalarMult([2, 3], [[1, 4], [2, 5], [3, 6]])
+    >>> scalarMultCols([2, 3], [[1, 4], [2, 5], [3, 6]])
     [[2, 12], [4, 15], [6, 18]]
     """
     assert len(lst) == len(arrList[0]), \
@@ -111,7 +111,7 @@ def subtract(arrList1, arrList2):
     >>> subtract([[]], [[]])
     [[]]
     """
-    return add(arrList1, scalarMult([-1]*len(arrList2[0]), arrList2))
+    return add(arrList1, scalarMultCols([-1]*len(arrList2[0]), arrList2))
 
 
 def multiply(arrList1, arrList2):
@@ -173,21 +173,26 @@ def mean_center(arrList):
     ([], [[]])
     """
     means = columnwise_means(arrList) # a list holding the means of the columns of arrList
-    arrList = subtract(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
+    arrList = subtract(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
     return means, arrList
 
 def normalize(arrList):
     """
-    Normalize the arrayList.
+    Normalize the arrayList, meaning divide each column by its standard deviation if that
+    standard deviation is nonzero, and leave the column unmodified if it's standard deviation
+    is zero.
+
+    Note: Columns 
 
     Args:
         arrList (a list of lists of numbers)
 
     Returns:
         list, list: A pair consisting of a list each entry of which is the standard deviation
-                    of the corresponding column of arrList, a list of lists each entry of
-                    which is that entry divided by the standard deviation of the column that
-                    that entry is in.
+                    of the corresponding column of arrList, and an arrayList (a list of lists)
+                    each column of which is that column divided by the standard deviation of 
+                    the column that column if that standard deviation is nonzero.  Columns
+                    with zero standard deviation are left unchanged.
 
     >>> normalize([[1, 2, 3], [6, 7, 8]]) # doctest:+ELLIPSIS
     ([2.5, 2.5, 2.5],...
@@ -201,7 +206,7 @@ def normalize(arrList):
     stdevs = list(map(lambda x: x**0.5, columnwise_means(centered_squared)))
     nonzero_stdevs = list(map(lambda x: 1 if x == 0 else x, stdevs))
     inverses = list(map(lambda x: 1/x, nonzero_stdevs))
-    return stdevs, multiply(scalarMult(inverses, ones(len(arrList), len(arrList[0]))), arrList)
+    return stdevs, scalarMultCols(inverses, arrList)
 
 def un_center(means, arrList):
     """
@@ -213,24 +218,33 @@ def un_center(means, arrList):
     Returns:
         list: A list of list of numbers.
     """
-    return add(arrList, scalarMult(means, ones(len(arrList), len(arrList[0]))))
+    return add(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
 
 def un_normalize(stdevs, arrList):
     """
-    Return an arrayList with ith column un_normalized by scalar stdevs[i]
+    Return an arrayList with ith column multiplied by scalar stdevs[i] if stdevs[i] is not zero,
+    and unmodified if it is zero.
 
     Args:
         list: A list of numbers (should be the list output by normalize).
         list: A list of list of numbers that is the (normalized) data.
     Returns:
         list: A list of list of numbers.
+
+    >>> un_normalize([0.5, 2],[[1, 2], [3,4]])
+    [[0.5, 4], [1.5, 8]]
+    >>> un_normalize([0.0, 2],[[1, 2], [3,4]])
+    [[1, 4], [3, 8]]
     """
-    return multiply(scalarMult(stdevs, ones(len(arrList), len(arrList[0]))), arrList)
+    stdevs = list(map(lambda x: x if x != 0.0 else 1, stdevs))
+    return scalarMultCols(stdevs, arrList)
 
 def un_normalize_slopes(lst, xstdevs, ystdevs):
+
     assert len(lst) == len(xstdevs) and len(ystdevs) == 1,\
      "First and second list have to be the same length; third currently has to be length 1."+\
      " The sizes are: " + str(len(lst)) + ", " +  str(len(xstdevs)) + ", " +  str(len(ystdevs))
+
     return multiplyLists(lst, divideLists(ystdevs * len(xstdevs), xstdevs))
 
 def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
