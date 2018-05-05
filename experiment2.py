@@ -17,11 +17,8 @@ def find_least_squares_reg_line(xs, ys, epochs = 20, learning_rate = 0.1):
     y_means, ys = mean_center(ys) # similarly here
     y_stdevs, ys = normalize(ys) # and here
 
-    # Append a column of ones to xs, which computes the bias when training.
-    xs = [[1] + x for x in xs]
-
     # create an instance of the neural net class
-    with Net([2,1]) as net:
+    with Net([1,1], criterion = "MSE") as net:
 
         # Now train the neural net:
         for j in range(epochs):
