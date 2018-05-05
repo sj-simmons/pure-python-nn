@@ -15,14 +15,17 @@ Notes:
     and edit the code in IDLE).
 
 Code summary:
-  * [SGD_nn.py](SGD_nn.py): The building blocks of a feed forward neural net.  
+  * [SGD_nn.py](SGD_nn.py): The building blocks of a feed forward neural net.
     Along with some functions to create non-linearity, the following classes are defined:
     * `Net` -- The neural net, which is built from layers (lists) of instances of the `Node` class.
     * `Node` -- essentially a list of instances of `InputLinks` along with some methods.
     * `InputLink` -- a small class with attributes `weight` and `inputNode`, instances of which connect the
       instances of Node that make up the `Net`.
 
-    Note: The inputs and outputs to an instance of Net are assumed to be lists of list, one list for
-    each example in the data set.
+    Notes: 
+    * The inputs and outputs to an instance of Net are assumed to be lists of list, one list for
+      each example in the data set.
+    * The `Net` class currently trains using SGD (stochastic gradient descent). TODO: implement mini-batch
+      gradient descent.
   * [PurePythonStats.py](PurePythonStats.py): This is small library of functions, written in pure Python,
     that are useful, for example, for mean_centering and normalizing data in the form of lists of lists.
