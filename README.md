@@ -29,7 +29,7 @@ Code summary:
 
     TODO: 
     * Implement mini-batch gradient descent.
-  * [PurePythonStats.py](PurePythonStats.py): This is small library of functions, written in pure Python,
+  * [Pure_Python_Stats.py](Pure_Python_Stats.py): This is small library of functions, written in pure Python,
     that are useful, for example, for mean-centering and normalizing data in the form of lists of lists.
 
 Data sets:
@@ -38,3 +38,9 @@ Data sets:
   * [titanic_numeric_train.csv](titanic_numeric_train.csv) -- same as Branton's original training set but with numeric fields.
   * [titanic_numeric_test.csv](titanic_numeric_test.csv) -- same as Branton's original test set but with numeric fields.
   * [titanic_to_numeric.py](titanic_to_numeric.py) -- this was used to generate the *numeric* versions. (Uses `pandas`.)
+
+Experiments:
+  * [experiment1.py](experiment1.py) -- generates fake data appropriate for linear regression on uses an instance of the
+    `Net` class in [SGD_nn.py](SGD_nn.py) to find the least-squares regression line for the data.
+  * [experiment2.py](experiment2.py) -- runs experiment1 many times and tabulates and analyses the mean and variation
+    of the slopes and standard deviations of the resulting regression lines.
