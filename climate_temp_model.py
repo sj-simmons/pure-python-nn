@@ -29,23 +29,31 @@ ystdevs, ys = normalize(ys)
 
 # An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
 # criterion.
-net = Net([2,1], batchsize = 5, criterion = 'MSE')
+batchsize = 5
+net = Net([2,1], batchsize = batchsize, criterion = 'MSE')
 
 # An unimportant helper function to sensibly print the current total error.
 def printloss(loss, idx, epochs, num_last_lines = 0):
     if num_last_lines == 0: num_last_lines = epochs
-    if idx < epochs - num_last_lines:
+    if idx < epochs - num_last_lines: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+    else: print('current loss: {0:12f}'.format(loss))
+
+epochs = 1000
+learning_rate = 0.01
+num_examples = len(xs)
+iters = epochs * num_examples
+
+for i in range(0, iters, batchsize):  # train the neural net
+    start = i % num_examples
+    end = start + batchsize
+    in_  = (xs+xs)[start: end]
+    out  = (ys+ys)[start: end]
+    net.learn(in_, out, learning_rate)
+    loss = net.getTotalError(xs, ys)
+    if i < iters - 30 * batchsize:
         print('current loss: {0:12f}'.format(loss), end='\b' * 26)
     else:
         print('current loss: {0:12f}'.format(loss))
-
-epochs = 10000
-learning_rate = 0.05
-
-for i in range(epochs):  # train the neural net
-    for j in range(len(xs)):
-        net.learn(xs[j], ys[j], learning_rate)
-    printloss(net.getTotalError(xs, ys), i, epochs, 30)
 
 # Get the weights from the trained model.
 weights = net.getWeights() # Weights is list of length 3 for these data.
@@ -58,5 +66,5 @@ print("\nThe least squares regression plane found by the neural net is: "+\
         "{0:.3f} + {1:.3f}*x1 + {2:.3f}*x2".format(weights[0], weights[1], weights[2]), end='')
 print(", where x1 is CO2 and x2 is SolarIrr.")
 
-print("The actual least squares regression plane is:"+\
-                                    "                  -11371.838 + 1.147*x1 + 8.047*x2.")
+print("The actual least squares regression plane is:" + " " * 18 +\
+                                                           "-11371.838 + 1.147*x1 + 8.047*x2.")

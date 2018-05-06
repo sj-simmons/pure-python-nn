@@ -78,20 +78,22 @@ class Node:
 
   def adjustWeights(self, outputs, learning_rate, criterion = 'MSE'):
 
-    # compute the gradient(s)
-    for idx in range(len(outputs)):
-      gradient = []
-      for inputLink in self.inputs:
+    # compute the gradient
+    gradient = [0] * len(self.inputs)
+    for i in range(len(self.inputs)):  # compute the partial w/r to the ith weight 
+      for j in range(len(outputs)):
         if criterion == 'MSE':
-          gradient.append((self.state - outputs[idx]) * inputLink.inputNode.state)
+          gradient[i] += (self.state - outputs[j][0]) * self.inputs[i].inputNode.state
         elif criterion == 'sigmoid':
-          gradient.append((sigmoid(self.state) - outputs[idx]) * d_sigmoid(self.state) *\
-                                                                     inputLink.inputNode.state)
+          gradient[i] += (sigmoid(self.state) - outputs[j][0]) * d_sigmoid(self.state) *\
+                                                               self.inputs[i].inputNode.state
     if verbose: print("the gradient is", gradient)
+    
+    gradient = [x/len(outputs) for x in gradient]
 
     # update weights
-    for idx in range(len(self.inputs)):
-      self.inputs[idx].weight -= learning_rate * gradient[idx]
+    for i in range(len(self.inputs)):
+      self.inputs[i].weight -= learning_rate * gradient[i]
 
   def getWeights(self):
 
@@ -103,7 +105,7 @@ class Node:
 
 class Net:
 
-  def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE', batchsize):
+  def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE', batchsize = 1):
     """
     A neural network class.
 
@@ -154,20 +156,22 @@ class Net:
 
     assert(len(inputs) == self.batchsize), "Number of inputs is " + str(len(inputs)) +\
                                            " but batchsize is " + str(self.batchsize)
+    assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same." 
     self.forward(inputs)
     self.backprop(outputs, learning_rate)
 
   def forward(self, inputs): # generates output for the given inputs
 
-    assert len(inputs) == len(self.inputNodes),\
+    assert len(inputs[0]) == len(self.inputNodes),\
         "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
-        " got " + str(len(inputs)) + "."
-    for idx in range(len(inputs)): # feed in the inputs
-      self.inputNodes[idx].setState(inputs[idx])
-    for node in self.hiddenNodes:
-      node.feedforward(activation = self.activations[0])
-    for node in self.outputNodes:
-      node.feedforward()
+        " got " + str(len(inputs[0])) + "."
+    for input_ in inputs:
+      for idx in range(len(input_)): # feed in the inputs
+        self.inputNodes[idx].setState(input_[idx])
+      for node in self.hiddenNodes:
+        node.feedforward(activation = self.activations[0])
+      for node in self.outputNodes:
+        node.feedforward()
 
   def getTotalError(self, inputs, outputs):
     """ 
@@ -179,9 +183,9 @@ class Net:
     """
     assert len(inputs) == len(outputs), "Length on inputs and outputs must be equal."
 
+    self.forward(inputs)
     total_error = 0
     for input in inputs:
-      self.forward(input)
       for idx in range(len(self.outputNodes)):
         total_error += (self.getOutput() - outputs[idx][0])**2
     return total_error / len(inputs)
