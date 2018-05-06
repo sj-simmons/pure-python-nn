@@ -29,7 +29,7 @@ ystdevs, ys = normalize(ys)
 
 # An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
 # criterion.
-batchsize = 5
+batchsize = 32
 net = Net([2,1], batchsize = batchsize, criterion = 'MSE')
 
 # An unimportant helper function to sensibly print the current total error.
@@ -38,7 +38,7 @@ def printloss(loss, idx, epochs, num_last_lines = 0):
     if idx < epochs - num_last_lines: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
     else: print('current loss: {0:12f}'.format(loss))
 
-epochs = 1000
+epochs = 3000
 learning_rate = 0.01
 num_examples = len(xs)
 iters = epochs * num_examples
