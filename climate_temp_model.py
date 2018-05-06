@@ -27,12 +27,9 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-# Add a column of ones to the inputs so that the neural net has a bias term.
-xs = [[1] + x for x in xs]
-
 # An instance of Net() which accepts 3 inputs (the 2 from the data plus 1 for the bias) and
 # has one output.
-net = Net([3,1])
+net = Net([2,1])
 
 # An unimportant helper function to sensibly print the current total error.
 def printloss(loss, idx, epochs, num_last_lines = 0):
@@ -42,8 +39,8 @@ def printloss(loss, idx, epochs, num_last_lines = 0):
     else:
         print('current loss: {0:12f}'.format(loss))
 
-epochs = 30
-learning_rate = 0.1
+epochs = 10000
+learning_rate = 0.05
 
 for i in range(epochs):  # train the neural net
     for j in range(len(xs)):
