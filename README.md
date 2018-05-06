@@ -28,7 +28,8 @@ Code summary:
     * The `Net` class currently trains using SGD (stochastic gradient descent). 
 
     TODO: 
-    * Implement mini-batch gradient descent.
+    * ~~Implement mini-batch gradient descent.~~ Improve the mini-batch implementation.
+    * Implement learning rate decay.
     * Implement a single hidden layer.
     * Implement multiple outputs and logSoftMax.
     * Implement a multiple hidden layers.
@@ -41,6 +42,10 @@ Data sets:
   * [titanic_numeric_train.csv](titanic_numeric_train.csv) -- same as Branton's original training set but with numeric fields.
   * [titanic_numeric_test.csv](titanic_numeric_test.csv) -- same as Branton's original test set but with numeric fields.
   * [titanic_to_numeric.py](titanic_to_numeric.py) -- this was used to generate the *numeric* versions. (Uses `pandas`.)
+
+Neural net examples:
+  * [climate_temp_model.py](climate_temp_model.py) -- A global average climate temperature model trained on these data:
+    [temp_co2_data.csv](temp_co2_data.csv).
 
 Experiments:
   * [experiment1.py](experiment1.py) -- generates fake data appropriate for linear regression on uses an instance of the
