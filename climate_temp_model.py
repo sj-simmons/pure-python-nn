@@ -1,6 +1,7 @@
 # climate_temp_model.py                                                      Simmons  Spring 18
 
 import csv
+from random import shuffle
 from SGD_nn import Net
 from Pure_Python_Stats import mean_center, normalize, un_map_weights
 
@@ -29,31 +30,27 @@ ystdevs, ys = normalize(ys)
 
 # An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
 # criterion.
-batchsize = 32
+batchsize = 16
 net = Net([2,1], batchsize = batchsize, criterion = 'MSE')
 
-# An unimportant helper function to sensibly print the current total error.
-def printloss(loss, idx, epochs, num_last_lines = 0):
-    if num_last_lines == 0: num_last_lines = epochs
-    if idx < epochs - num_last_lines: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else: print('current loss: {0:12f}'.format(loss))
-
-epochs = 3000
-learning_rate = 0.01
+epochs = 5000
+learning_rate = 0.03
 num_examples = len(xs)
-iters = epochs * num_examples
+indices = list(range(num_examples))
 
-for i in range(0, iters, batchsize):  # train the neural net
-    start = i % num_examples
-    end = start + batchsize
-    in_  = (xs+xs)[start: end]
-    out  = (ys+ys)[start: end]
-    net.learn(in_, out, learning_rate)
+for i in range(epochs * batchsize):
+    shuffle(indices)                  #
+    xs = [xs[idx] for idx in indices] # shuffle the examples
+    ys = [ys[idx] for idx in indices] #
+    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
+        start = j % num_examples
+        end = start + batchsize
+        in_  = (xs+xs[:batchsize])[start: end]
+        out  = (ys+ys[:batchsize])[start: end]
+        net.learn(in_, out, learning_rate)
     loss = net.getTotalError(xs, ys)
-    if i < iters - 30 * batchsize:
-        print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else:
-        print('current loss: {0:12f}'.format(loss))
+    if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+    else: print('current loss: {0:12f}'.format(loss))
 
 # Get the weights from the trained model.
 weights = net.getWeights() # Weights is list of length 3 for these data.

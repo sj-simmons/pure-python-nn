@@ -1,6 +1,7 @@
 # housing_model.py                                                           Simmons  Spring 18
 
 import csv
+from random import shuffle
 from SGD_nn import Net
 from Pure_Python_Stats import mean_center, normalize, un_map_weights, dotLists
 
@@ -19,30 +20,27 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-batchsize = 15
+batchsize = 200
 net = Net([13,1], batchsize = batchsize, criterion = 'MSE')
 
-def printloss(loss, idx, epochs, num_last_lines = 0):
-    if num_last_lines == 0: num_last_lines = epochs
-    if idx < epochs - num_last_lines: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else: print('current loss: {0:12f}'.format(loss))
-
-epochs = 10
-learning_rate = 0.01
+epochs = 20
+learning_rate = 0.1
 num_examples = len(xs)
-iters = epochs * num_examples
+indices = list(range(num_examples))
 
-for i in range(0, iters, batchsize):  # train the neural net
-    start = i % num_examples
-    end = start + batchsize
-    in_  = (xs+xs)[start: end]
-    out  = (ys+ys)[start: end]
-    net.learn(in_, out, learning_rate)
+for i in range(epochs * batchsize):
+    shuffle(indices)
+    xs = [xs[idx] for idx in indices]
+    ys = [ys[idx] for idx in indices]
+    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
+        start = j % num_examples
+        end = start + batchsize
+        in_  = (xs+xs[:batchsize])[start: end]
+        out  = (ys+ys[:batchsize])[start: end]
+        net.learn(in_, out, learning_rate)
     loss = net.getTotalError(xs, ys)
-    if i < iters - 30 * batchsize:
-        print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else:
-        print('current loss: {0:12f}'.format(loss))
+    if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+    else: print('current loss: {0:12f}'.format(loss))
 
 def compute_r_squared(xs, ys, net):
     """ 
