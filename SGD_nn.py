@@ -36,7 +36,6 @@ def ReLU(x):
 class InputLink:
 
   def __init__ (self, node, wt):
-
     self.inputNode = node  # node is an instance of Node
     self.weight = wt  # wt is a number
     self.partial = 0
@@ -47,26 +46,22 @@ class InputLink:
   def addToPartial(self, x):
     self.partial += x
 
-  def getPartial(self):
-    return self.partial
-
   def adjustWeight(self, learning_rate):
     self.weight = self.weight - learning_rate * self.partial
 
 
 class Node:
   """
-    A Node in a neural network.
+  A Node in a neural network.
 
-    Attributes:
-      inputs: a list of instances of InputLists representing all the Nodes in the neural net
-              the 'feed into' this node.
-      state: a number.  Note: for an output node this is the state BEFORE the criterion is
-             applied.  
+  Attributes:
+    inputs: a list of instances of InputLists representing all the Nodes in the neural net
+            the 'feed into' this node.
+    state: a number.  Note: for an output node this is the state BEFORE the criterion is
+           applied.
   """
 
   def __init__(self, nodeList, activation = None):
-
     self.inputs = []
     self.nodeList = nodeList
     self.state = 0
@@ -81,6 +76,7 @@ class Node:
     return self.state
 
   def zeroGradient(self):
+    if verbose: print("zeroing partials")
     for inputLink in self.inputs:
       inputLink.zeroPartial()
 
@@ -95,31 +91,32 @@ class Node:
                            this is an output node, or None (if this is an input node or a
                            hidden node with no activation.
       with_grad (boolean): Accumulate this node's gradient if True.
-      output (number)    : If accumulating the gradient, we need an output.  
+      output (number)    : If accumulating the gradient, we need an output.
     """
-    assert output == None or with_grad, "If accumulating gradient, an output must be passed." 
+    assert output == None or with_grad, "If accumulating gradient, an output must be passed."
+    if verbose: print("feeding foward. with_grad =", with_grad, "and function =", function)
 
-    # Feedforward from all the inputs to this Node.
+    # feedforward from all the inputs to this node
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
     self.setState(sum_)
+
+    # while we are feeding forward, add contribution of this example to the partials
     if function == 'MSE':
       for inputLink in self.inputs:
-        inputLink.gradient += (sum_ - output[0]) * inputLink.inputNode.state
+        inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
     elif function == 'sigmoid':
       for inputLink in self.inputs:
-        inputLink.gradient += (sigmoid(sum_) - output[0]) * d_sigmoid(self.state) *\
-                                                                   inputLink.inputNode.state
+        inputLink.addToPartial((sigmoid(sum_) - output[0]) * d_sigmoid(self.state) *\
+                                                                   inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate):
-
-    # update weights
+    if verbose: print("adusting weights")
     for inputLink in self.inputs:
-      inputLink.adjustWeight(learning_rate) 
+      inputLink.adjustWeight(learning_rate)
 
   def getWeights(self):
-
     weights = []
     for node in self.inputs:
       weights.append(node.weight)
@@ -136,7 +133,7 @@ class Net:
     setting batchsize equal to the number of examples in the training data.
 
     Attributes
-      nodes_per_layer (list): 
+      nodes_per_layer (list):
       activations (List)    : A list of strings, currently each either 'linear' or 'sigmoid',
                               one for each hidden layer.
       batchsize (int)       : The number of examples in a batch.
@@ -180,8 +177,8 @@ class Net:
         self.outputNodes.append(Node(self.hiddenNodes, activations[-1]))
 
   def learn(self, inputs, outputs, learning_rate = .1):
-    """ 
-    Apply one step along mini-batch gradient descent.  
+    """
+    Apply one step along mini-batch gradient descent.
 
     Args:
       inputs (list): A list of lists holding the batch's inputs.
@@ -191,46 +188,52 @@ class Net:
 
     assert(len(inputs) == self.batchsize), "Number of inputs is " + str(len(inputs)) +\
                                            " but batchsize is " + str(self.batchsize)
-    assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same." 
+    assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same."
 
-    states = self.forward(inputs)
+    self.forward(inputs, outputs, with_grad = True)
     self.backprop(learning_rate)
 
-  def forward(self, inputs, outputs = None, with_grad = False): 
-    """ Feed forward the given inputs. """
+  def forward(self, inputs, outputs = None, with_grad = False):
+    """
+    Feed forward the given inputs.
+
+    Attributes:
+      inputs (list)   : A list of lists each list of which is one of this batch's examples.
+      outputs (list)  : A list of lists of the corresponding outputs.
+      with_grad (bool): If True, updates the gradients while feeding forward.
+    """
 
     assert len(inputs[0]) == len(self.inputNodes),\
         "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
         " got " + str(len(inputs[0])) + "."
 
-    for input_ in inputs:
-      for idx in range(len(input_)): # feed in the inputs
-        self.inputNodes[idx].setState(input_[idx])
-    for node in self.hiddenNodes:
-      node.feedforward(activation = self.activations[0], with_grad = True, output = None)
-    if with_grad:
-      for output in outputs:
+    for i in range(len(inputs)):
+      for j in range(len(inputs[i])): # feed in the inputs
+        self.inputNodes[j].setState(inputs[i][j])
+      for node in self.hiddenNodes:
+        node.feedforward(activation = self.activations[0], with_grad = True, output = None)
+      if with_grad:
         for node in self.outputNodes:
-          node.feedforward(function = self.criterion, with_grad = True, output = output)
-    else:
-      for node in self.outputNodes:
-        node.feedforward(function = None, with_grad = False, output = None)
+          node.feedforward(function = self.criterion, with_grad = True, output = outputs[i])
+      else:
+        for node in self.outputNodes:
+          node.feedforward(function = None, with_grad = False, output = None)
 
   def zeroGrads(self):
+    if verbose: print("setting gradients to zero")
     for node in self.hiddenNodes:
       node.zeroGradient()
     for node in self.outputNodes:
       node.zeroGradient()
 
   def backprop(self, learning_rate):
-
     for node in self.outputNodes:
       node.adjustWeights(learning_rate)
 
   def getTotalError(self, inputs, outputs):
-    """ 
+    """
     Return the total mean squared error over of all input/outputs pairs.
-  
+
     Args:
       inputs (list of lists):
       outputs (list of lists):
@@ -245,14 +248,12 @@ class Net:
     return total_error / len(inputs)
 
   def getWeights(self):
-
     assert len(self.nodes_per_layer) == 2,\
      "Method getWeights not implemented for networks with hidden layers. You probably don't"+\
      " really need the weights for those networks."
     return self.outputNodes[0].getWeights()
 
   def getOutput(self):
-
     output = self.outputNodes[0].getState()
     if self.criterion == 'sigmoid':
       output = sigmoid(output)
@@ -270,25 +271,24 @@ class Net:
   # them have been removed.
 
   def __enter__(self):
-
     return self
 
   def __exit__(self, *args):
-
     self.inputNodes = []
     self.hiddenNodes = []
     self.outputNodes = []
     activations = []
     criterion = ''
 
+
 if __name__ == '__main__':
 
-  import random 
-  num_examples = 20 
+  import random
+  num_examples = 20
 
   # generate some data
   xs = [];  ys = []
-  m = 2; b = 7; stdev = 20
+  m = 2; b = 7; stdev = 10
   for i in range(num_examples):
     x = random.uniform(0,40)
     xs.append([x])
@@ -301,15 +301,16 @@ if __name__ == '__main__':
   ymeans, ys = mean_center(ys) # similarly here
   ystdevs, ys = normalize(ys) # and here
 
-  batchsize = 5
+  batchsize = 4
   net = Net([1,1], batchsize = batchsize, criterion = 'MSE')
 
-  epochs = 100 
-  learning_rate = 0.1
+  epochs = 5000
+  learning_rate = 0.05
   indices = list(range(num_examples))
 
   for i in range(epochs * batchsize):
     random.shuffle(indices)
+    if verbose: print('shuffling')
     xs = [xs[idx] for idx in indices]
     ys = [ys[idx] for idx in indices]
     for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
@@ -319,12 +320,16 @@ if __name__ == '__main__':
       out  = (ys+ys[:batchsize])[start: end]
       net.zeroGrads()
       net.learn(in_, out, learning_rate)
-    loss = net.getTotalError(xs, ys)
-    if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else: print('current loss: {0:12f}'.format(loss))
+      if verbose:
+        loss = net.getTotalError(xs, ys)
+        print('current loss: {0:12f}'.format(loss))
+    if not verbose:
+      loss = net.getTotalError(xs, ys)
+      if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+      else: print('current loss: {0:12f}'.format(loss))
 
   def compute_r_squared(xs, ys, net):
-    """ 
+    """
     Return 1-SSE/SST which is the proportion of the variance in the data explained by the
     regression hyper-plane.
     """
@@ -340,16 +345,10 @@ if __name__ == '__main__':
       SS_T = SS_T + (ys[i][0] - ymean[0])**2
 
     return 1.0-SS_E/SS_T
-  
+
   print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
-  
+
   weights = net.getWeights()
   weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs)
 
   print('weights:',weights[0], weights[1] )
-
-
-
-
-
-
