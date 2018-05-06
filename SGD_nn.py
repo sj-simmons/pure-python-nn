@@ -57,9 +57,10 @@ class Node:
     self.inputs = []
     self.nodeList = nodeList
     self.state = 0
+    self.gradient = 0
     if verbose: print("  node created")
     for node in nodeList:
-      self.inputs.append(InputLink(node, random.random() - 0.5))
+      self.inputs.append(InputLink(node, 2* random.random() - 1.0))
 
   def setState(self, value):
     self.state = value
@@ -67,8 +68,18 @@ class Node:
   def getState(self):
     return self.state
 
-  def feedforward(self, activation = None):
+  def zeroGradient(self):
+    self.gradient = 0
 
+  def feedforward(self, activation = None, with_grad = False, output = None ):
+    """
+    Feedforward for all the inputs to this instance of Node, applying the activation function
+    if present.  If with_grad, then accumulate this node's gradient.
+
+    Attributes:
+      activation (function): The activation function for this node or None. 
+      with_grad (boolean)  : Accumulate this nodes gradient if true
+    """
     # Feedforward from all the inputs to this Node.
     sum_ = 0
     for inputLink in self.inputs:
