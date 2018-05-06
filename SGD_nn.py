@@ -103,7 +103,7 @@ class Node:
 
 class Net:
 
-  def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE'):
+  def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE', batchsize):
     """
     A neural network class.
 
@@ -119,6 +119,7 @@ class Net:
     self.outputNodes = []
     self.activations = activations
     self.criterion = criterion
+    self.batchsize = batchsize
 
     assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
@@ -151,6 +152,8 @@ class Net:
 
   def learn(self, inputs, outputs, learning_rate = .1):
 
+    assert(len(inputs) == self.batchsize), "Number of inputs is " + str(len(inputs)) +\
+                                           " but batchsize is " + str(self.batchsize)
     self.forward(inputs)
     self.backprop(outputs, learning_rate)
 
