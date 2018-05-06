@@ -27,9 +27,9 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-# An instance of Net() which accepts 3 inputs (the 2 from the data plus 1 for the bias) and
-# has one output.
-net = Net([2,1])
+# An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
+# criterion.
+net = Net([2,1], batchsize = 5, criterion = 'MSE')
 
 # An unimportant helper function to sensibly print the current total error.
 def printloss(loss, idx, epochs, num_last_lines = 0):
