@@ -13,3 +13,37 @@ Notes:
     Then enter `cd pure-python-nn` and run programs with, for example, `python3 experiment1.py`
     (assuming that `python3` is in your `PATH`; otherwise you should be able to open, run,
     and edit the code in IDLE).
+
+Code summary:
+  * [SGD_nn.py](SGD_nn.py): The building blocks of a feed forward neural net.
+    Along with some functions to create non-linearity, the following classes are defined:
+    * `Net` -- The neural net, which is built from layers (lists) of instances of the `Node` class.
+    * `Node` -- essentially a list of instances of `InputLinks` along with some methods.
+    * `InputLink` -- a small class with attributes `weight` and `inputNode`, instances of which connect the
+      instances of Node that make up the `Net`.
+
+    Notes: 
+    * The inputs and outputs to an instance of Net are assumed to be lists of list, one list for
+      each example in the data set.
+    * The `Net` class currently trains using SGD (stochastic gradient descent). 
+
+    TODO: 
+    * Implement mini-batch gradient descent.
+    * Implement a single hidden layer.
+    * Implement multiple outputs and logSoftMax.
+    * Implement a multiple hidden layers.
+  * [Pure_Python_Stats.py](Pure_Python_Stats.py): This is small library of functions, written in pure Python,
+    that are useful, for example, for mean-centering and normalizing data in the form of lists of lists.
+
+Data sets:
+  * [titanic_train.csv](titanic_train.csv) -- Branton's original Titanic training set.
+  * [titanic_test.csv](titanic_test.csv) -- Branton's original Titanic test set.
+  * [titanic_numeric_train.csv](titanic_numeric_train.csv) -- same as Branton's original training set but with numeric fields.
+  * [titanic_numeric_test.csv](titanic_numeric_test.csv) -- same as Branton's original test set but with numeric fields.
+  * [titanic_to_numeric.py](titanic_to_numeric.py) -- this was used to generate the *numeric* versions. (Uses `pandas`.)
+
+Experiments:
+  * [experiment1.py](experiment1.py) -- generates fake data appropriate for linear regression on uses an instance of the
+    `Net` class in [SGD_nn.py](SGD_nn.py) to find the least-squares regression line for the data.
+  * [experiment2.py](experiment2.py) -- runs experiment1 many times and tabulates and analyses the mean and variation
+    of the slopes and standard deviations of the resulting regression lines.
