@@ -39,6 +39,19 @@ class InputLink:
 
     self.inputNode = node  # node is an instance of Node
     self.weight = wt  # wt is a number
+    self.partial = 0
+
+  def zeroPartial(self):
+    self.partial = 0
+
+  def addToPartial(self, x):
+    self.partial += x
+
+  def getPartial(self):
+    return self.partial
+
+  def adjustWeight(self, learning_rate):
+    self.weight = self.weight - learning_rate * self.partial
 
 
 class Node:
@@ -57,7 +70,6 @@ class Node:
     self.inputs = []
     self.nodeList = nodeList
     self.state = 0
-    self.gradient = 0
     if verbose: print("  node created")
     for node in nodeList:
       self.inputs.append(InputLink(node, 2* random.random() - 1.0))
@@ -69,43 +81,42 @@ class Node:
     return self.state
 
   def zeroGradient(self):
-    self.gradient = 0
+    for inputLink in self.inputs:
+      inputLink.zeroPartial()
 
-  def feedforward(self, activation = None, with_grad = False, output = None ):
+  def feedforward(self, function = None, with_grad = False, output = None ):
     """
     Feedforward for all the inputs to this instance of Node, applying the activation function
     if present.  If with_grad, then accumulate this node's gradient.
 
     Attributes:
-      activation (function): The activation function for this node or None. 
-      with_grad (boolean)  : Accumulate this nodes gradient if true
+      activation (string): A valid string of either an activation function (indicating that
+                           this node is in a hidden layer) or a criterion (indicating that
+                           this is an output node, or None (if this is an input node or a
+                           hidden node with no activation.
+      with_grad (boolean): Accumulate this node's gradient if True.
+      output (number)    : If accumulating the gradient, we need an output.  
     """
+    assert output == None or with_grad, "If accumulating gradient, an output must be passed." 
+
     # Feedforward from all the inputs to this Node.
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
     self.setState(sum_)
-    if verbose: print("the sum is", sum_)
-    return self.state
+    if function == 'MSE':
+      for inputLink in self.inputs:
+        inputLink.gradient += (sum_ - output[0]) * inputLink.inputNode.state
+    elif function == 'sigmoid':
+      for inputLink in self.inputs:
+        inputLink.gradient += (sigmoid(sum_) - output[0]) * d_sigmoid(self.state) *\
+                                                                   inputLink.inputNode.state
 
-  def adjustWeights(self, states, inputs, outputs, learning_rate, criterion = 'MSE'):
-
-    # compute the gradient
-    gradient = [0] * len(self.inputs)
-    for i in range(len(self.inputs)):  # compute the partial w/r to the ith weight 
-      for j in range(len(outputs)):
-        if criterion == 'MSE':
-          gradient[i] += (states[j] - outputs[j][0]) * inputs[j][i]
-        elif criterion == 'sigmoid':
-          gradient[i] += (sigmoid(self.state) - outputs[j][0]) * d_sigmoid(self.state) *\
-                                                               self.inputs[i].inputNode.state
-    if verbose: print("the gradient is", gradient)
-    
-    gradient = [x/len(outputs) for x in gradient]
+  def adjustWeights(self, learning_rate):
 
     # update weights
-    for i in range(len(self.inputs)):
-      self.inputs[i].weight -= learning_rate * gradient[i]
+    for inputLink in self.inputs:
+      inputLink.adjustWeight(learning_rate) 
 
   def getWeights(self):
 
@@ -183,23 +194,38 @@ class Net:
     assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same." 
 
     states = self.forward(inputs)
-    self.backprop(states, inputs, outputs, learning_rate)
+    self.backprop(learning_rate)
 
-  def forward(self, inputs): # generates output for the given inputs
+  def forward(self, inputs, outputs = None, with_grad = False): 
+    """ Feed forward the given inputs. """
 
     assert len(inputs[0]) == len(self.inputNodes),\
         "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
         " got " + str(len(inputs[0])) + "."
 
-    states = []
     for input_ in inputs:
       for idx in range(len(input_)): # feed in the inputs
         self.inputNodes[idx].setState(input_[idx])
-      for node in self.hiddenNodes:
-        node.feedforward(activation = self.activations[0])
+    for node in self.hiddenNodes:
+      node.feedforward(activation = self.activations[0], with_grad = True, output = None)
+    if with_grad:
+      for output in outputs:
+        for node in self.outputNodes:
+          node.feedforward(function = self.criterion, with_grad = True, output = output)
+    else:
       for node in self.outputNodes:
-        states.append(node.feedforward())
-    return states
+        node.feedforward(function = None, with_grad = False, output = None)
+
+  def zeroGrads(self):
+    for node in self.hiddenNodes:
+      node.zeroGradient()
+    for node in self.outputNodes:
+      node.zeroGradient()
+
+  def backprop(self, learning_rate):
+
+    for node in self.outputNodes:
+      node.adjustWeights(learning_rate)
 
   def getTotalError(self, inputs, outputs):
     """ 
@@ -217,11 +243,6 @@ class Net:
       for idx in range(len(self.outputNodes)):
         total_error += (self.getOutput() - outputs[idx][0])**2
     return total_error / len(inputs)
-
-  def backprop(self, states, inputs, outputs, learning_rate):
-
-    for node in self.outputNodes:
-      node.adjustWeights(states, inputs, outputs, learning_rate, self.criterion)
 
   def getWeights(self):
 
@@ -259,3 +280,76 @@ class Net:
     self.outputNodes = []
     activations = []
     criterion = ''
+
+if __name__ == '__main__':
+
+  import random 
+  num_examples = 20 
+
+  # generate some data
+  xs = [];  ys = []
+  m = 2; b = 7; stdev = 20
+  for i in range(num_examples):
+    x = random.uniform(0,40)
+    xs.append([x])
+    ys.append([m * x + b + random.normalvariate(0,stdev)])
+
+  # mean center and nomalize
+  from Pure_Python_Stats import mean_center, normalize, un_center, un_normalize, un_map_weights
+  xmeans, xs = mean_center(xs) # x_means is a list consisting of the means of the cols of xs
+  xstdevs, xs = normalize(xs) # x_stdevs holds the standard deviations of the columns
+  ymeans, ys = mean_center(ys) # similarly here
+  ystdevs, ys = normalize(ys) # and here
+
+  batchsize = 5
+  net = Net([1,1], batchsize = batchsize, criterion = 'MSE')
+
+  epochs = 100 
+  learning_rate = 0.1
+  indices = list(range(num_examples))
+
+  for i in range(epochs * batchsize):
+    random.shuffle(indices)
+    xs = [xs[idx] for idx in indices]
+    ys = [ys[idx] for idx in indices]
+    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
+      start = j % num_examples
+      end = start + batchsize
+      in_  = (xs+xs[:batchsize])[start: end]
+      out  = (ys+ys[:batchsize])[start: end]
+      net.zeroGrads()
+      net.learn(in_, out, learning_rate)
+    loss = net.getTotalError(xs, ys)
+    if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+    else: print('current loss: {0:12f}'.format(loss))
+
+  def compute_r_squared(xs, ys, net):
+    """ 
+    Return 1-SSE/SST which is the proportion of the variance in the data explained by the
+    regression hyper-plane.
+    """
+    SS_E = 0.0;  SS_T = 0.0
+
+    from Pure_Python_Stats import columnwise_means
+    ymean = columnwise_means(ys)  # mean of the output variable (which is zero if data is mean-centered)
+
+    for i in range(len(ys)):
+      net.forward([xs[i]])
+      out = net.getOutput()
+      SS_E = SS_E + (ys[i][0] - out )**2
+      SS_T = SS_T + (ys[i][0] - ymean[0])**2
+
+    return 1.0-SS_E/SS_T
+  
+  print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
+  
+  weights = net.getWeights()
+  weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs)
+
+  print('weights:',weights[0], weights[1] )
+
+
+
+
+
+
