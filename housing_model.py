@@ -19,21 +19,30 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-net = Net([13,1], criterion = 'MSE')
+batchsize = 15
+net = Net([13,1], batchsize = batchsize, criterion = 'MSE')
 
 def printloss(loss, idx, epochs, num_last_lines = 0):
     if num_last_lines == 0: num_last_lines = epochs
     if idx < epochs - num_last_lines: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
     else: print('current loss: {0:12f}'.format(loss))
 
-epochs = 5000
+epochs = 10
 learning_rate = 0.01
+num_examples = len(xs)
+iters = epochs * num_examples
 
-for i in range(epochs):  
-    for j in range(len(xs)):
-        net.learn(xs[j], ys[j], learning_rate)
-    printloss(net.getTotalError(xs, ys), i, epochs, 40)
-
+for i in range(0, iters, batchsize):  # train the neural net
+    start = i % num_examples
+    end = start + batchsize
+    in_  = (xs+xs)[start: end]
+    out  = (ys+ys)[start: end]
+    net.learn(in_, out, learning_rate)
+    loss = net.getTotalError(xs, ys)
+    if i < iters - 30 * batchsize:
+        print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+    else:
+        print('current loss: {0:12f}'.format(loss))
 
 def compute_r_squared(xs, ys, net):
     """ 
@@ -46,7 +55,7 @@ def compute_r_squared(xs, ys, net):
     ymean = columnwise_means(ys)  # mean of the output variable (which is zero if data is mean-centered)
 
     for i in range(len(ys)):
-      net.forward(xs[i])
+      net.forward([xs[i]])
       out = net.getOutput()
       SS_E = SS_E + (ys[i][0] - out )**2
       SS_T = SS_T + (ys[i][0] - ymean[0])**2
@@ -55,25 +64,8 @@ def compute_r_squared(xs, ys, net):
 
 print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
 
-print()
 weights = net.getWeights()
-for i in range(len(weights)):
-    print(weights[i])
-print("len",len(weights))
-print()
 weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs) 
-for i in range(len(weights)):
-    print(weights[i])
-print("len",len(weights))
-
-sum_ = 0
-for i in range(13):
-    net.forward([0]*i+[1]+[0]*(12-i))
-    sum_ += sum_ * net.getOutput()
-    print('intercept', net.getOutput())
-
-print("here", ymeans[0] + sum_ * ystdevs[0])
-
 
 # Now make a prediction
 house_to_be_assessed = [2855, 0, 26690, 8, 7, 1652, 1972, 1040, 2080, 1756, 8, 841, 2]
