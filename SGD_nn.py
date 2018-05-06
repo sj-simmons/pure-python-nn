@@ -106,15 +106,19 @@ class Node:
 
 class Net:
 
-  def __init__(self, nodes_per_layer, activations = [], criterion = 'MSE', batchsize = 1):
+  def __init__(self, nodes_per_layer, activations = [], batchsize = 1, criterion = 'MSE'):
     """
     A neural network class.
 
+    One recovers stochastic gradient descent using batchsize = 1; and gradient descent by
+    setting batchsize equal to the number of examples in the training data.
+
     Attributes
-      nodes_per_layer (list)
-      activations (List): A list of strings, currently each either 'linear' or 'sigmoid',
-                          one for each hidden layer.
-      criterion (string): Either 'MSE' or 'sigmoid'.  TODO: add 'LogSoftMax'.
+      nodes_per_layer (list): 
+      activations (List)    : A list of strings, currently each either 'linear' or 'sigmoid',
+                              one for each hidden layer.
+      batchsize (int)       : The number of examples in a batch.
+      criterion (string)    : Either 'MSE' or 'sigmoid'.  TODO: add 'LogSoftMax'.
     """
     self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
@@ -154,10 +158,19 @@ class Net:
         self.outputNodes.append(Node(self.hiddenNodes, activations[-1]))
 
   def learn(self, inputs, outputs, learning_rate = .1):
+    """ 
+    Apply one step along mini-batch gradient descent.  
+
+    Args:
+      inputs (list): A list of lists holding the batch's inputs.
+      outputs (list): A list of lists holding the batch's corresponding outputs.
+      learning_rate (number): Scaling factor for the gradient during descent.
+    """
 
     assert(len(inputs) == self.batchsize), "Number of inputs is " + str(len(inputs)) +\
                                            " but batchsize is " + str(self.batchsize)
     assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same." 
+
     states = self.forward(inputs)
     self.backprop(states, inputs, outputs, learning_rate)
 
