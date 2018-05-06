@@ -75,15 +75,16 @@ class Node:
       sum_ += inputLink.weight * inputLink.inputNode.state
     self.setState(sum_)
     if verbose: print("the sum is", sum_)
+    return self.state
 
-  def adjustWeights(self, outputs, learning_rate, criterion = 'MSE'):
+  def adjustWeights(self, states, inputs, outputs, learning_rate, criterion = 'MSE'):
 
     # compute the gradient
     gradient = [0] * len(self.inputs)
     for i in range(len(self.inputs)):  # compute the partial w/r to the ith weight 
       for j in range(len(outputs)):
         if criterion == 'MSE':
-          gradient[i] += (self.state - outputs[j][0]) * self.inputs[i].inputNode.state
+          gradient[i] += (states[j] - outputs[j][0]) * inputs[j][i]
         elif criterion == 'sigmoid':
           gradient[i] += (sigmoid(self.state) - outputs[j][0]) * d_sigmoid(self.state) *\
                                                                self.inputs[i].inputNode.state
@@ -157,21 +158,24 @@ class Net:
     assert(len(inputs) == self.batchsize), "Number of inputs is " + str(len(inputs)) +\
                                            " but batchsize is " + str(self.batchsize)
     assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same." 
-    self.forward(inputs)
-    self.backprop(outputs, learning_rate)
+    states = self.forward(inputs)
+    self.backprop(states, inputs, outputs, learning_rate)
 
   def forward(self, inputs): # generates output for the given inputs
 
     assert len(inputs[0]) == len(self.inputNodes),\
         "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
         " got " + str(len(inputs[0])) + "."
+
+    states = []
     for input_ in inputs:
       for idx in range(len(input_)): # feed in the inputs
         self.inputNodes[idx].setState(input_[idx])
       for node in self.hiddenNodes:
         node.feedforward(activation = self.activations[0])
       for node in self.outputNodes:
-        node.feedforward()
+        states.append(node.feedforward())
+    return states
 
   def getTotalError(self, inputs, outputs):
     """ 
@@ -190,10 +194,10 @@ class Net:
         total_error += (self.getOutput() - outputs[idx][0])**2
     return total_error / len(inputs)
 
-  def backprop(self, outputs, learning_rate):
+  def backprop(self, states, inputs, outputs, learning_rate):
 
     for node in self.outputNodes:
-      node.adjustWeights(outputs, learning_rate, self.criterion)
+      node.adjustWeights(states, inputs, outputs, learning_rate, self.criterion)
 
   def getWeights(self):
 
