@@ -28,7 +28,7 @@ Code summary:
     * The `Net` class currently trains using SGD (stochastic gradient descent). 
 
     TODO: 
-    * ~~Implement mini-batch gradient descent.~~ Improve the mini-batch implementation.
+    * ~~Implement mini-batch gradient descent.~~
     * Implement learning rate decay.
     * Implement a single hidden layer.
     * Implement multiple outputs and logSoftMax.
@@ -46,6 +46,8 @@ Data sets:
 Neural net examples:
   * [climate_temp_model.py](climate_temp_model.py) -- A global average climate temperature model trained on these data:
     [temp_co2_data.csv](temp_co2_data.csv).
+  * [housing_model.py](housing_model.py) -- A housing valuation model based on the Ames, Iowa housing data set:
+    [AmesHousing.csv](AmesHousing.csv).
 
 Experiments:
   * [experiment1.py](experiment1.py) -- generates fake data appropriate for linear regression on uses an instance of the
