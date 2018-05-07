@@ -1,6 +1,7 @@
 # climate_temp_model.py                                                      Simmons  Spring 18
 
 import csv
+from random import shuffle
 from SGD_nn import Net
 from Pure_Python_Stats import mean_center, normalize, un_map_weights
 
@@ -27,25 +28,34 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-# An instance of Net() which accepts 3 inputs (the 2 from the data plus 1 for the bias) and
-# has one output.
-net = Net([2,1])
+# An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
+# criterion.
+batchsize = 32 
+net = Net([2,1], batchsize = batchsize, criterion = 'MSE')
 
-# An unimportant helper function to sensibly print the current total error.
-def printloss(loss, idx, epochs, num_last_lines = 0):
-    if num_last_lines == 0: num_last_lines = epochs
-    if idx < epochs - num_last_lines:
-        print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else:
-        print('current loss: {0:12f}'.format(loss))
+epochs = 2000
+learning_rate = 0.01
+num_examples = len(xs)
+indices = list(range(num_examples))
+printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
 
-epochs = 10000
-learning_rate = 0.05
-
-for i in range(epochs):  # train the neural net
-    for j in range(len(xs)):
-        net.learn(xs[j], ys[j], learning_rate)
-    printloss(net.getTotalError(xs, ys), i, epochs, 30)
+for i in range(epochs * batchsize):
+    shuffle(indices)                  #
+    xs = [xs[idx] for idx in indices] # shuffle the examples
+    ys = [ys[idx] for idx in indices] #
+    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
+        start = j % num_examples
+        end = start + batchsize
+        in_  = (xs+xs[:batchsize])[start: end]
+        out  = (ys+ys[:batchsize])[start: end]
+        net.zeroGrads()
+        net.learn(in_, out, learning_rate)
+        if i >= printlns and j > num_examples - batchsize * 30:
+          loss = net.getTotalError(xs, ys)
+          print('current loss: {0:12f}'.format(loss))
+    if i <= printlns:
+      loss = net.getTotalError(xs, ys)
+      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
 
 # Get the weights from the trained model.
 weights = net.getWeights() # Weights is list of length 3 for these data.
@@ -58,5 +68,5 @@ print("\nThe least squares regression plane found by the neural net is: "+\
         "{0:.3f} + {1:.3f}*x1 + {2:.3f}*x2".format(weights[0], weights[1], weights[2]), end='')
 print(", where x1 is CO2 and x2 is SolarIrr.")
 
-print("The actual least squares regression plane is:"+\
-                                    "                  -11371.838 + 1.147*x1 + 8.047*x2.")
+print("The actual least squares regression plane is:" + " " * 18 +\
+                                                           "-11371.838 + 1.147*x1 + 8.047*x2.")

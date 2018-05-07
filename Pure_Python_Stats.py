@@ -63,6 +63,7 @@ def dotLists(lst1, lst2):
     >>> dotLists([1, 2, 3], [4, 5, 6])
     32
     """
+    assert len(lst1) == len(lst2), "The lengths of the lists should be the same."
     return reduce(lambda x,y: x+y, [pair[0] * pair[1] for pair in zip(lst1, lst2)])
 
 def scalarMultCols(lst, arrList):
