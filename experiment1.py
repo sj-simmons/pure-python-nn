@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     # Create an instance of the neural net class with 1 input and 1 output, no hidden layer,
     # no activation function, mean squared error criterion.
-    net = Net([1,1], criterion = 'MSE')
+    net = Net([1,1], batchsize = 1, criterion = 'MSE')
 
     # An un-important helper function to sensibly print the current total error.
     def printloss(loss, idx, epochs, num_last_lines = 0):
@@ -66,13 +66,13 @@ if __name__ == '__main__':
         else:
             print('current loss: {0:12f}'.format(loss))
 
-    epochs = 30
-    learning_rate = 0.01
+    epochs = 5000 
+    learning_rate = 0.05
 
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
-            net.learn(xs[i], ys[i], learning_rate)
+            net.learn([xs[i]], [ys[i]], learning_rate)
         printloss(net.getTotalError(xs, ys), j, epochs)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
