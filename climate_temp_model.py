@@ -30,13 +30,14 @@ ystdevs, ys = normalize(ys)
 
 # An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
 # criterion.
-batchsize = 16
+batchsize = 32 
 net = Net([2,1], batchsize = batchsize, criterion = 'MSE')
 
-epochs = 5000
-learning_rate = 0.03
+epochs = 2000
+learning_rate = 0.01
 num_examples = len(xs)
 indices = list(range(num_examples))
+printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
 
 for i in range(epochs * batchsize):
     shuffle(indices)                  #
@@ -47,10 +48,14 @@ for i in range(epochs * batchsize):
         end = start + batchsize
         in_  = (xs+xs[:batchsize])[start: end]
         out  = (ys+ys[:batchsize])[start: end]
+        net.zeroGrads()
         net.learn(in_, out, learning_rate)
-    loss = net.getTotalError(xs, ys)
-    if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else: print('current loss: {0:12f}'.format(loss))
+        if i >= printlns and j > num_examples - batchsize * 30:
+          loss = net.getTotalError(xs, ys)
+          print('current loss: {0:12f}'.format(loss))
+    if i <= printlns:
+      loss = net.getTotalError(xs, ys)
+      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
 
 # Get the weights from the trained model.
 weights = net.getWeights() # Weights is list of length 3 for these data.

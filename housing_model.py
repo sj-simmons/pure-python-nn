@@ -23,24 +23,30 @@ ystdevs, ys = normalize(ys)
 batchsize = 200
 net = Net([13,1], batchsize = batchsize, criterion = 'MSE')
 
-epochs = 20
-learning_rate = 0.1
+epochs = 10
+learning_rate = 0.001
 num_examples = len(xs)
 indices = list(range(num_examples))
+printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
+print(printlns, epochs * batchsize)
 
 for i in range(epochs * batchsize):
     shuffle(indices)
     xs = [xs[idx] for idx in indices]
     ys = [ys[idx] for idx in indices]
-    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
+    for j in range(0, num_examples, batchsize): # about num_examples/batchsize passes
         start = j % num_examples
         end = start + batchsize
         in_  = (xs+xs[:batchsize])[start: end]
         out  = (ys+ys[:batchsize])[start: end]
+        net.zeroGrads()
         net.learn(in_, out, learning_rate)
-    loss = net.getTotalError(xs, ys)
-    if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-    else: print('current loss: {0:12f}'.format(loss))
+        if i >= printlns and j > num_examples - batchsize * 30:
+          loss = net.getTotalError(xs, ys)
+          print('current loss: {0:12f}'.format(loss))
+    if i < printlns:
+      loss = net.getTotalError(xs, ys)
+      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
 
 def compute_r_squared(xs, ys, net):
     """ 
