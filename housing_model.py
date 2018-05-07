@@ -5,7 +5,7 @@ from random import shuffle
 from SGD_nn import Net
 from Pure_Python_Stats import mean_center, normalize, un_map_weights, dotLists
 
-with open('AmesHousing.csv') as csvfile:
+with open('datasets/AmesHousing.csv') as csvfile:
 #with open('ames_small.csv') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
     next(csvfile)  # Skip the first line of csvfile that holds the labels.

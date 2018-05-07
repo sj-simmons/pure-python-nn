@@ -7,7 +7,7 @@ from Pure_Python_Stats import mean_center, normalize, un_map_weights
 
 # This code block reads the data from the csv file and, skipping the first line, writes the
 # 2nd, 3rd, and 4th elements of each line to appropriate lists.
-with open('temp_co2_data.csv') as csvfile:
+with open('datasets/temp_co2_data.csv') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
     next(csvfile)  # Skip the first line of csvfile that holds the labels.
     xs = [] # Create empty lists to hold the inputs,
