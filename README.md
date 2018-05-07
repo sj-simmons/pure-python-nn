@@ -36,7 +36,9 @@ Code summary:
 
     TODO:
     * ~~Implement mini-batch gradient descent.~~
-    * Implement learning rate decay.
+    * Implement learning rate decay.  
+      * It might be best to implement this exterior to `SGD.py`.  The `learn` method in `SGD.py` accepts the learning
+        rate as a paramater that can be changed on the fly (while training).
     * Implement a single hidden layer.
     * Implement multiple outputs and logSoftMax.
     * Implement a multiple hidden layers.
