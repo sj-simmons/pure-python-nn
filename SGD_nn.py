@@ -55,15 +55,14 @@ class Node:
   A Node in a neural network.
 
   Attributes:
-    inputs: a list of instances of InputLists representing all the Nodes in the neural net
-            the 'feed into' this node.
-    state: a number.  Note: for an output node this is the state BEFORE the criterion is
-           applied.
+    inputs (list) : A list of instances of InputLists representing all the Nodes in the neural
+                    net that 'feed into' this node.
+    state (number): Note: for an output node this is the state BEFORE the criterion is
+                    applied.
   """
 
   def __init__(self, nodeList, activation = None):
     self.inputs = []
-    self.nodeList = nodeList
     self.state = 0
     if verbose: print("  node created")
     for node in nodeList:
@@ -313,6 +312,7 @@ if __name__ == '__main__':
   epochs = 5000
   learning_rate = 0.05
   indices = list(range(num_examples))
+  printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
 
   for i in range(epochs * batchsize):
     random.shuffle(indices)
@@ -326,13 +326,12 @@ if __name__ == '__main__':
       out  = (ys+ys[:batchsize])[start: end]
       net.zeroGrads()
       net.learn(in_, out, learning_rate)
-      if verbose:
+      if i >= printlns and j > num_examples - batchsize * 30:
         loss = net.getTotalError(xs, ys)
         print('current loss: {0:12f}'.format(loss))
-    if not verbose:
+    if i <= printlns:
       loss = net.getTotalError(xs, ys)
-      if i < epochs * batchsize - 30: print('current loss: {0:12f}'.format(loss), end='\b' * 26)
-      else: print('current loss: {0:12f}'.format(loss))
+      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
 
   def compute_r_squared(xs, ys, net):
     """
