@@ -111,10 +111,10 @@ class Node:
         inputLink.addToPartial((sigmoid(sum_) - output[0]) * d_sigmoid(self.state) *\
                                                                    inputLink.inputNode.state)
 
-  def adjustWeights(self, learning_rate):
+  def adjustWeights(self, learning_rate, batchsize):
     if verbose: print("adusting weights")
     for inputLink in self.inputs:
-      inputLink.adjustWeight(learning_rate)
+      inputLink.adjustWeight(learning_rate / batchsize)
 
   def getWeights(self):
     weights = []
@@ -234,7 +234,7 @@ class Net:
 
   def backprop(self, learning_rate):
     for node in self.outputNodes:
-      node.adjustWeights(learning_rate)
+      node.adjustWeights(learning_rate, self.batchsize)
 
   def getTotalError(self, inputs, outputs):
     """
