@@ -255,27 +255,6 @@ class Net:
       output = sigmoid(output)
     return output
 
-  # The following two methods allow one to create instances of this class within a
-  # Python 'with' statement.
-  # Using a 'with' statement is not necessary if you just want to instantiate an
-  # instance of Net() and train it only once, as in experiment1.py.
-  # But if you want to instantiate an instance and re-use in multiple times, as in
-  # experiment1.py, then, technically, one does well to clean things up in-between
-  # re-uses by employing a 'with' statement. (See experiment2.py).
-  # This has to do with the way garbage collection works in Python: specifically,
-  # objects are deleted not when the go our of scope but when all references to
-  # them have been removed.
-
-  def __enter__(self):
-    return self
-
-  def __exit__(self, *args):
-    self.inputNodes = []
-    self.hiddenNodes = []
-    self.outputNodes = []
-    activations = []
-    criterion = ''
-
 
 if __name__ == '__main__':
 

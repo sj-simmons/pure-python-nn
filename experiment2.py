@@ -18,17 +18,17 @@ def find_least_squares_reg_line(xs, ys, epochs, learning_rate):
     y_stdevs, ys = normalize(ys) # and here
 
     # create an instance of the neural net class
-    with Net([1,1], criterion = "MSE") as net:
+    net = Net([1,1], criterion = "MSE")
 
-        # Now train the neural net:
-        for j in range(epochs):
-            for i in range(len(xs)):
-                net.zeroGrads()
-                net.learn([xs[i]], [ys[i]], learning_rate)
+    # Now train the neural net:
+    for j in range(epochs):
+        for i in range(len(xs)):
+            net.zeroGrads()
+            net.learn([xs[i]], [ys[i]], learning_rate)
 
-        # The list weights below holds the intercept and slope, respectively, of the regression
-        # line found by the neural net.
-        weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
+    # The list weights below holds the intercept and slope, respectively, of the regression
+    # line found by the neural net.
+    weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
 
     weights = un_map_weights(weights, x_means, x_stdevs, y_means, y_stdevs)
     return weights[0], weights[1]
