@@ -20,15 +20,14 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-batchsize = 200
+batchsize = 50
 net = Net([13,1], batchsize = batchsize, criterion = 'MSE')
 
-epochs = 10
-learning_rate = 0.001
+epochs = 20 
+learning_rate = 0.03
 num_examples = len(xs)
 indices = list(range(num_examples))
 printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
-print(printlns, epochs * batchsize)
 
 for i in range(epochs * batchsize):
     shuffle(indices)
