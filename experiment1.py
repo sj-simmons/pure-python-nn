@@ -66,12 +66,13 @@ if __name__ == '__main__':
         else:
             print('current loss: {0:12f}'.format(loss))
 
-    epochs = 5000 
-    learning_rate = 0.05
+    epochs = 100 
+    learning_rate = 0.1
 
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
+            net.zeroGrads()
             net.learn([xs[i]], [ys[i]], learning_rate)
         printloss(net.getTotalError(xs, ys), j, epochs)
 
