@@ -6,9 +6,8 @@ from SGD_nn import Net
 from Pure_Python_Stats import mean_center, normalize, un_map_weights, dotLists
 
 with open('datasets/AmesHousing.csv') as csvfile:
-#with open('ames_small.csv') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
-    next(csvfile)  # Skip the first line of csvfile that holds the labels.
+    labels = next(csvfile).split(',') # Get the column labels and move to the next line. 
     xs = [] # Create empty lists to hold the inputs,
     ys = [] # and the outputs.
     for row in reader:
@@ -55,8 +54,8 @@ def compute_r_squared(xs, ys, net):
     SS_E = 0.0;  SS_T = 0.0
 
     from Pure_Python_Stats import columnwise_means
-    ymean = columnwise_means(ys)  # mean of the output variable (which is zero if data is mean-centered)
-
+    ymean = columnwise_means(ys)  # mean of the output variable 
+                                  #(which is zero if data is mean-centered)
     for i in range(len(ys)):
       net.forward([xs[i]])
       out = net.getOutput()
@@ -70,6 +69,16 @@ print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
 weights = net.getWeights()
 weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs) 
 
-# Now make a prediction
-house_to_be_assessed = [2855, 0, 26690, 8, 7, 1652, 1972, 1040, 2080, 1756, 8, 841, 2]
-print('\nestimated value: ${:,.2f}'.format(weights[0]+dotLists(weights[1:],house_to_be_assessed)))
+# Print out the plane found by the neural net.
+print("\nThe least squares regression plane found by the neural net is:\n    "+\
+         '{:,.2f}'.format(weights[0]) + ' + ' +\
+     ' + '.join('{0:.3f}*x{1}'.format(weights[i], i) for i in range(1, len(weights)-7))+ '\n'+' '*25 +\
+  ' + '.join('{0:.3f}*x{1}'.format(weights[i], i) for i in range(len(weights)-7, len(weights))), end='\n')
+print ("where:\n "+\
+        ' \n '.join('x{1} is {0}'.format(labels[i], i) for i in range(1, len(weights))), end='\n')
+
+# Now make a valuation
+house = [2855, 0, 26690, 8, 7, 1652, 1972, 1040, 2080, 1756, 8, 841, 2]
+print ("If:\n "+\
+ ' \n '.join('{0} = {1}'.format(labels[i].strip('\n'), house[i-1]) for i in range(1, len(weights))), end='\n')
+print('then the estimated value is ${:,.2f}.\n'.format(weights[0]+dotLists(weights[1:],house)))
