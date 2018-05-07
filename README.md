@@ -15,19 +15,26 @@ Notes:
     and edit the code in IDLE).
 
 Code summary:
-  * [SGD_nn.py](SGD_nn.py): The building blocks of a feed forward neural net.
+  * [SGD_nn.py](SGD_nn.py): The building blocks of a feed forward neural net that trains via SGD (stochastic gradient descent).
     Along with some functions to create non-linearity, the following classes are defined:
     * `Net` -- The neural net, which is built from layers (lists) of instances of the `Node` class.
     * `Node` -- essentially a list of instances of `InputLinks` along with some methods.
     * `InputLink` -- a small class with attributes `weight` and `inputNode`, instances of which connect the
       instances of Node that make up the `Net`.
 
-    Notes: 
+    Notes:
     * The inputs and outputs to an instance of Net are assumed to be lists of list, one list for
       each example in the data set.
-    * The `Net` class currently trains using SGD (stochastic gradient descent). 
+    * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover SGD (stochastic gradient descent)
+      with batchsize = 1; or, gradient descent, by setting batchsize to the number of examples in your data.
+    * In your training loop, you must zero our the gradients before learning:
+      ```
+      net.zeroGrads()
+      net.learn(xs, ys, learning_rate)
+      ```
+      where `net` is your instance of the `Net` class.
 
-    TODO: 
+    TODO:
     * ~~Implement mini-batch gradient descent.~~
     * Implement learning rate decay.
     * Implement a single hidden layer.
