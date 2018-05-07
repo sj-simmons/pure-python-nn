@@ -2,20 +2,10 @@
 #
 # This implements a feed-forward, fully-connected neural net in pure Python that trains using
 # SGD (stochastic gradient descent).
-#
-# (4/29/18) does not support hidden layers.
-# (4/30/18) now supports a hidden layer but no non-linearity yet; so there currently no benefit
-#           or point in using a hidden layer.
-# (5/2/18) Should now work with TWO-layer networks with ONE output node with criterion either
-#          MSE (Mean Squared Error) of sigmoid (poor's mans softmax).
-#          TODO:  Allow a single hidden layer with either sigmoid or linear activations.
-#          TODO:  Allow mulitple output with a logsoftmax criterion.
 
 import math, random
 
 verbose = False
-
-# Some functions:
 
 def sigmoid(x):
   """ Return the value of the sigmoid function evaluated at the input x. """
@@ -48,6 +38,7 @@ class InputLink:
 
   def adjustWeight(self, learning_rate):
     self.weight = self.weight - learning_rate * self.partial
+    if verbose: print("adjusting weight, partial =", self.partial)
 
 
 class Node:
