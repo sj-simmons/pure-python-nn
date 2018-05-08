@@ -23,10 +23,10 @@ xstdevs, xs = normalize(xs)
 #ymeans, ys = mean_center(ys)
 #ystdevs, ys = normalize(ys)
 
-xs = [[1]+x for x in xs]  # now 9 inputs
+#xs = [[1]+x for x in xs]  # now 9 inputs
 
 batchsize = 10
-net = Net([7,1], batchsize = batchsize, criterion = 'sigmoid')
+net = Net([6,1], batchsize = batchsize, criterion = 'sigmoid-MSE')
 
 epochs = 20
 learning_rate = 0.1
@@ -69,7 +69,7 @@ with open('datasets/titanic_numeric_test.csv') as csvfile:
         xs.append([float(row[0])] + [float(row[i]) for i in range(2,7)])  # without boat, body
         ys.append([float(row[1])])
 
-xs = [[1]+x for x in xs]  # now 9 inputs
+#xs = [[1]+x for x in xs]  # now 9 inputs
 
 # check accuracy on the test set
 num_passengers = len(xs)
