@@ -5,7 +5,7 @@
 
 import math, random
 
-verbose = False
+verbose = True
 
 def sigmoid(x):
   """ Return the value of the sigmoid function evaluated at the input x. """
@@ -137,7 +137,7 @@ class Net:
     """
     self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
-    self.hiddenNodes = []
+    self.hiddenLayers = [[]]
     self.outputNodes = []
     self.activations = activations
     self.criterion = criterion
@@ -158,11 +158,11 @@ class Net:
       self.inputNodes.append(Node([]))
 
     # Populate the hidden layers
-    for layer in range(1,len(self.nodes_per_layer)-2):
+    for layer in range(1,len(self.nodes_per_layer)-1):
       if verbose:\
         print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
       for node in range(self.nodes_per_layer[layer]):
-        self.hiddenNodes.append(Node(self.inputNodes, activation = activations[layer]))
+        self.hiddenLayers[layer - 1].append(Node(self.inputNodes, activation = activations[layer - 1]))
 
     # Populate the ouput layer
     if verbose: print("populating output layer with", self.nodes_per_layer[1], "node(s).")
@@ -170,7 +170,7 @@ class Net:
       if len(self.nodes_per_layer) < 3:  # if no hidden layers
         self.outputNodes.append(Node(self.inputNodes, activation = None))
       else:
-        self.outputNodes.append(Node(self.hiddenNodes, activations[-1]))
+        self.outputNodes.append(Node(self.hiddenLayers[-1], activations[-1]))
 
   def learn(self, inputs, outputs, learning_rate = .1):
     """
@@ -206,23 +206,32 @@ class Net:
     for i in range(len(inputs)):
       for j in range(len(inputs[i])): # feed in the inputs
         self.inputNodes[j].setState(inputs[i][j])
-      for node in self.hiddenNodes:
-        node.feedforward(activation = self.activations[0], with_grad = True, output = None)
-      if with_grad:
-        for node in self.outputNodes:
+      for layer in range(len(self.hiddenLayers)):
+        for node in self.hiddenLayers[layer]:
+          if with_grad:
+            node.feedforward(function = self.activations[layer], with_grad = True, output = None)
+          else:
+            node.feedforward(function = None, with_grad = False, output = None)
+      for node in self.outputNodes:
+        if with_grad:
           node.feedforward(function = self.criterion, with_grad = True, output = outputs[i])
-      else:
-        for node in self.outputNodes:
+        else:
           node.feedforward(function = None, with_grad = False, output = None)
 
   def zeroGrads(self):
     if verbose: print("setting gradients to zero")
-    for node in self.hiddenNodes:
-      node.zeroGradient()
+    for layer in self.hiddenLayers:
+      for node in layer:
+        node.zeroGradient()
     for node in self.outputNodes:
       node.zeroGradient()
 
   def backprop(self, learning_rate):
+    for layer in range(len(self.hiddenLayers)):
+      print('layer is', layer)
+      for node in self.hiddenLayers[-layer]:
+        if verbose: print("updating weights for hidden layer", layer)
+        node.adjustWeights(learning_rate, self.batchsize)
     for node in self.outputNodes:
       node.adjustWeights(learning_rate, self.batchsize)
 
@@ -255,6 +264,12 @@ class Net:
       output = sigmoid(output)
     return output
 
+################################
+
+# a convenient function that implements a training loop instances of Net.
+def train(net, lines_to_print = 30):
+  ...
+ 
 
 if __name__ == '__main__':
 
