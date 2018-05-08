@@ -1,4 +1,4 @@
-# titanic.py                                                                       Simmons 2018
+# titanic_sigmoid_model.py                                                         Simmons 2018
 #
 # trains a linear model on Branton's version of Kaggle Titanic dataset
 #
@@ -14,8 +14,8 @@ with open('datasets/titanic_numeric_train.csv') as csvfile:
     next(csvfile)  # Skip the first line of csvfile that holds the labels.
     xs = []; ys = []
     for row in reader:
-        xs.append([float(row[0])] + [float(row[i]) for i in range(2,len(row))])
-        #xs.append([float(row[0])] + [float(row[i]) for i in range(2,8)])
+        #xs.append([float(row[0])] + [float(row[i]) for i in range(2,len(row))])
+        xs.append([float(row[0])] + [float(row[i]) for i in range(2,7)]) # without boat, body
         ys.append([float(row[1])])
 
 xmeans, xs = mean_center(xs)
@@ -25,8 +25,8 @@ xstdevs, xs = normalize(xs)
 
 xs = [[1]+x for x in xs]  # now 9 inputs
 
-batchsize = 2
-net = Net([9,1], batchsize = batchsize, criterion = 'sigmoid')
+batchsize = 10
+net = Net([7,1], batchsize = batchsize, criterion = 'sigmoid')
 
 epochs = 20
 learning_rate = 0.1
@@ -65,8 +65,8 @@ with open('datasets/titanic_numeric_test.csv') as csvfile:
     next(csvfile)  # Skip the first line of csvfile that holds the labels.
     xs = []; ys = []
     for row in reader:
-        xs.append([float(row[0])] + [float(row[i]) for i in range(2,len(row))])
-        #xs.append([float(row[0])] + [float(row[i]) for i in range(2,8)])
+        #xs.append([float(row[0])] + [float(row[i]) for i in range(2,len(row))])
+        xs.append([float(row[0])] + [float(row[i]) for i in range(2,7)])  # without boat, body
         ys.append([float(row[1])])
 
 xs = [[1]+x for x in xs]  # now 9 inputs
