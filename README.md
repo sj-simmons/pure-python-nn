@@ -19,23 +19,34 @@ Code summary:
     Along with some functions to create non-linearity, the following classes are defined:
     * `Net` -- The neural net, which is built from layers (lists) of instances of the `Node` class.
     * `Node` -- essentially a list of instances of `InputLinks` along with some methods.
-    * `InputLink` -- a small class with attributes `weight` and `inputNode`, instances of which connect the
+    * `InputLink` -- a small class with attributes `inputNode`, `weight`, and `partial`, instances of which connect the
       instances of Node that make up the `Net`.
 
     Notes:
-    * The inputs and outputs to an instance of Net are assumed to be lists of list, one list for
+    * The inputs and outputs to an instance of `Net` are assumed to be lists of list, one list for
       each example in the data set.
     * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover SGD (stochastic gradient descent)
-      with batchsize = 1; or, gradient descent, by setting batchsize to the number of examples in your data.
+      with batchsize = 1; or, gradient descent, by setting batchsize to the number of examples in your data.  
+    * Examples of instantiating the `Net` class:
+      * `net = Net([8,1], batchsize = 1, criterion = 'MSE')` -- A model with 8 inputs, 1 ouput, no hidden layers, mean-squared-error criterion
+        that trains using stochastic gradient descent.
+      * `net = Net([15,1], batchsize = 20, criterion = 'sigmoid-MSE')` -- A model with 15 inputs, 1 output, no hidden layers that trains with
+        mini-batch gradient descent using mean-squared-error criterion but first applying the sigmoid function to the outputs.
+    * One trains an instance of the `Net` class using the `train` method:
+      ``` python
+      for i in ... 
+          net.train(inputs_, outputs, learning_rate)
+      ```
+      where `inputs_` and `outputs` are batches of examples -- so lists of lists (of examples).
     * In your training loop, you must zero our the gradients before learning:
+      ``` python
+      for ...
+          net.zeroGrads()
+          net.learn(xs, ys, learning_rate)
       ```
-      net.zeroGrads()
-      net.learn(xs, ys, learning_rate)
-      ```
-      where `net` is your instance of the `Net` class.
 
     TODO:
-    * ~~Implement mini-batch gradient descent.~~
+    * ~~Implement mini-batch gradient descent~~.
     * Implement learning rate decay.  
       * It might be best to implement this exterior to `SGD.py`.  The `learn` method in `SGD.py` accepts the learning
         rate as a paramater that can be changed on the fly (while training).
