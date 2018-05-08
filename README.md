@@ -32,8 +32,8 @@ Code summary:
         that trains using stochastic gradient descent.
       * `net = Net([15,1], batchsize = 20, criterion = 'sigmoid-MSE')` -- A model with 15 inputs, 1 output, no hidden layers that trains with
         mini-batch gradient descent using mean-squared-error criterion but first applying the sigmoid function to the output.  This is a
-        [logistic regression model](https://en.wikipedia.org/wiki/Logistic_regression)
-        (see also [here](https://www.encyclopediaofmath.org/index.php/Logistic_regression)) and is often refered to a
+        [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression) model
+        (see also [here](https://www.encyclopediaofmath.org/index.php/Logistic_regression)) and is often referred to as a
         [single-layered perceptron](https://en.wikipedia.org/wiki/Logistic_regression#As_a_single-layer_perceptron) network.
     * One trains an instance of the `Net` class using the `learn` method:
       ``` python
@@ -54,7 +54,7 @@ Code summary:
     * ~~Implement mini-batch gradient descent~~.
     * Implement learning rate decay.  
       * It might be best to implement this exterior to `SGD.py`.  The `learn` method in `SGD.py` accepts the learning
-        rate as a paramater that can be changed on the fly (while training).
+        rate as a parameter that can be changed on the fly (while training).
     * Implement a single hidden layer.
     * Implement multiple outputs and logSoftMax.
     * Implement a multiple hidden layers.
