@@ -31,16 +31,21 @@ Code summary:
       * `net = Net([8,1], batchsize = 1, criterion = 'MSE')` -- A model with 8 inputs, 1 ouput, no hidden layers, mean-squared-error criterion
         that trains using stochastic gradient descent.
       * `net = Net([15,1], batchsize = 20, criterion = 'sigmoid-MSE')` -- A model with 15 inputs, 1 output, no hidden layers that trains with
-        mini-batch gradient descent using mean-squared-error criterion but first applying the sigmoid function to the outputs.
+        mini-batch gradient descent using mean-squared-error criterion but first applying the sigmoid function to the output.  This is a
+        [logistic regression model](https://en.wikipedia.org/wiki/Logistic_regression)
+        (see also [here](https://www.encyclopediaofmath.org/index.php/Logistic_regression)) and is often refered to a
+        [single-layered perceptron](https://en.wikipedia.org/wiki/Logistic_regression#As_a_single-layer_perceptron) network.
     * One trains an instance of the `Net` class using the `train` method:
       ``` python
-      for i in ... 
+      for ... 
+          ...
           net.train(inputs_, outputs, learning_rate)
       ```
       where `inputs_` and `outputs` are batches of examples -- so lists of lists (of examples of the data).
-    * In your training loop, you must zero our the gradients before learning:
+    * In your training loop, you must zero out the gradients before learning:
       ``` python
       for ...
+          ...
           net.zeroGrads()
           net.learn(xs, ys, learning_rate)
       ```
