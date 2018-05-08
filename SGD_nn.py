@@ -57,7 +57,7 @@ class Node:
     self.state = 0
     if verbose: print("  node created")
     for node in nodeList:
-      self.inputs.append(InputLink(node, 2* random.random() - 1.0))
+      self.inputs.append(InputLink(node, 2 * random.random() - 1.0))
 
   def setState(self, value):
     self.state = value
