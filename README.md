@@ -45,18 +45,20 @@ Code summary:
   * [Pure_Python_Stats.py](Pure_Python_Stats.py): This is small library of functions, written in pure Python,
     that are useful, for example, for mean-centering and normalizing data in the form of lists of lists.
 
+Neural net examples:
+  * [climate_temp_model.py](climate_temp_model.py) -- A global average climate temperature model trained on these data:
+    [temp_co2_data.csv](datasets/temp_co2_data.csv).
+  * [housing_model.py](housing_model.py) -- A housing valuation model based on the Ames, Iowa housing data set:
+    [AmesHousing.csv](datasets/AmesHousing.csv).
+  * [titanic_sigmoid_model.py](titanic_sigmoid_model.py) -- Predicts survival after training on numeric versions of Branton's
+    Titanic datasets.
+
 Data sets:
   * [titanic_train.csv](datasets/titanic_train.csv) -- Branton's original Titanic training set.
   * [titanic_test.csv](datasets/titanic_test.csv) -- Branton's original Titanic test set.
   * [titanic_numeric_train.csv](datasets/titanic_numeric_train.csv) -- same as Branton's original training set but with numeric fields.
   * [titanic_numeric_test.csv](datasets/titanic_numeric_test.csv) -- same as Branton's original test set but with numeric fields.
   * [titanic_to_numeric.py](datasets/titanic_to_numeric.py) -- this was used to generate the *numeric* versions. (Uses `pandas`.)
-
-Neural net examples:
-  * [climate_temp_model.py](climate_temp_model.py) -- A global average climate temperature model trained on these data:
-    [temp_co2_data.csv](datasets/temp_co2_data.csv).
-  * [housing_model.py](housing_model.py) -- A housing valuation model based on the Ames, Iowa housing data set:
-    [AmesHousing.csv](datasets/AmesHousing.csv).
 
 Experiments:
   * [experiment1.py](experiment1.py) -- generates fake data appropriate for linear regression on uses an instance of the
