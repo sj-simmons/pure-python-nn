@@ -76,7 +76,7 @@ class Node:
     if present.  If with_grad, then accumulate this node's gradient.
 
     Attributes:
-      activation (string): A valid string of either an activation function (indicating that
+      function (string)  : A valid string of either an activation function (indicating that
                            this node is in a hidden layer) or a criterion (indicating that
                            this is an output node, or None (if this is an input node or a
                            hidden node with no activation.
@@ -96,7 +96,7 @@ class Node:
     if function == 'MSE':
       for inputLink in self.inputs:
         inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
-    elif function == 'sigmoid':
+    elif function == 'sigmoid-MSE':
       for inputLink in self.inputs:
         s = sigmoid(sum_)
         inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
@@ -133,7 +133,7 @@ class Net:
       activations (List)    : A list of strings, currently each either 'linear' or 'sigmoid',
                               one for each hidden layer.
       batchsize (int)       : The number of examples in a batch.
-      criterion (string)    : Either 'MSE' or 'sigmoid'.  TODO: add 'LogSoftMax'.
+      criterion (string)    : Either 'MSE' or 'sigmoid-MSE'.  TODO: add 'LogSoftMax'.
     """
     self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
@@ -145,8 +145,8 @@ class Net:
 
     assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-    assert criterion in set(['MSE', 'sigmoid']),\
-        "Currently, the criterion must be 'MSE or 'sigmoid'."
+    assert criterion in set(['MSE', 'sigmoid-MSE']),\
+        "Currently, the criterion must be 'MSE or 'sigmoid-MSE'."
     if len(nodes_per_layer) > 2:
       assert activations[0] in set([None, 'sigmoid']), "No such activation."
       assert len(activations) == len(nodes_per_layer) - 2,\
