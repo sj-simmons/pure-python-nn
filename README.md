@@ -37,7 +37,7 @@ Code summary:
       for i in ... 
           net.train(inputs_, outputs, learning_rate)
       ```
-      where `inputs_` and `outputs` are batches of examples -- so lists of lists (of examples).
+      where `inputs_` and `outputs` are batches of examples -- so lists of lists (of examples of the data).
     * In your training loop, you must zero our the gradients before learning:
       ``` python
       for ...
@@ -61,7 +61,7 @@ Neural net examples:
     [temp_co2_data.csv](datasets/temp_co2_data.csv).
   * [housing_model.py](housing_model.py) -- A housing valuation model based on the Ames, Iowa housing data set:
     [AmesHousing.csv](datasets/AmesHousing.csv).
-  * [titanic_sigmoid_model.py](titanic_sigmoid_model.py) -- Predicts survival after training on numeric versions of Branton's
+  * [titanic_model.py](titanic_model.py) -- Predicts survival after training on numeric versions of Branton's
     Titanic datasets.
 
 Data sets:
