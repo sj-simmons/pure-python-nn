@@ -98,8 +98,8 @@ class Node:
         inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
     elif function == 'sigmoid':
       for inputLink in self.inputs:
-        inputLink.addToPartial((sigmoid(sum_) - output[0]) * d_sigmoid(self.state) *\
-                                                                   inputLink.inputNode.state)
+        s = sigmoid(sum_)
+        inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate, batchsize):
     if verbose: print("adusting weights")
