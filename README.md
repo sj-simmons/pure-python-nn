@@ -7,7 +7,7 @@ Notes:
   * All code in this repo runs in Python 3, and not necessarily in Python 2.
   * You can conveniently pull this entire repo down to your computer using git by typing at the command
     line:
-    ```
+    ``` bash
     git clone http://github.com/sj-simmons/pure-python-nn
     ```
     Then enter `cd pure-python-nn` and run programs with, for example, `python3 experiment1.py`
@@ -35,11 +35,11 @@ Code summary:
         [logistic regression model](https://en.wikipedia.org/wiki/Logistic_regression)
         (see also [here](https://www.encyclopediaofmath.org/index.php/Logistic_regression)) and is often refered to a
         [single-layered perceptron](https://en.wikipedia.org/wiki/Logistic_regression#As_a_single-layer_perceptron) network.
-    * One trains an instance of the `Net` class using the `train` method:
+    * One trains an instance of the `Net` class using the `learn` method:
       ``` python
       for ... 
           ...
-          net.train(inputs_, outputs, learning_rate)
+          net.learn(inputs_, outputs, learning_rate)
       ```
       where `inputs_` and `outputs` are batches of examples -- so lists of lists (of examples of the data).
     * In your training loop, you must zero out the gradients before learning:
