@@ -13,6 +13,9 @@ def strings_to_nums(df):
             return -1
         elif string == 'female':
             return 1
+        else: 
+            print("data error sex:",string)
+            exit()
 
     def age_to_num(string):
         if string == 'UNDER 21':
@@ -21,6 +24,9 @@ def strings_to_nums(df):
             return 0
         elif string == 'OVER 40':
             return 1
+        else:
+            print("data error age:",string)
+            exit()
 
     def embarked_to_num(string):
         if string == 'C':
@@ -29,18 +35,27 @@ def strings_to_nums(df):
             return 0
         elif string == 'S':
             return 1
+        else: 
+            print("data error embarked:",string)
+            exit()
 
     def boat_to_num(boolean):
         if boolean == False:
             return -1
         elif boolean == True:
             return 1
+        else:
+            print("data error boat:",boolean)
+            exit()
 
     def body_to_num(boolean):
         if boolean == False:
             return -1
         elif boolean == True:
             return 1
+        else:
+            print("data error body:",boolean)
+            exit()
 
     df.sex = df.sex.apply(sex_to_num)
     df.age = df.age.apply(age_to_num)
