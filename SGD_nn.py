@@ -5,7 +5,7 @@
 
 import math, random
 
-verbose = True
+verbose = False
 
 def sigmoid(x):
   """ Return the value of the sigmoid function evaluated at the input x. """
@@ -21,6 +21,32 @@ def d_sigmoid(y):
 def ReLU(x):
   """ Rectified Linear Unit """
   return max(0, x)
+
+def identity(x):
+  return x
+
+def softMax(x):
+  ...
+
+def MSE(x, output):
+  return (x - output)**2
+
+def activate(activation):
+  activation_dict = {
+    'sigmoid': sigmoid,
+    'ReLU': ReLU,
+    'id': identity,
+    None: identity,
+  }
+  return activation_dict.get(activation, '')
+
+def set_criterion(activation):
+  activation_dict = {
+    'MSE': MSE,
+    'softMax': softMax,
+    'sigmoid': sigmoid,
+  }
+  return activation_dict.get(activation, '')
 
 
 class InputLink:
@@ -70,18 +96,16 @@ class Node:
     for inputLink in self.inputs:
       inputLink.zeroPartial()
 
-  def feedforward(self, function = None, with_grad = False, output = None ):
+  def feedforward(self, function = None, with_grad = False, criterion = None, output = None ):
     """
     Feedforward for all the inputs to this instance of Node, applying the activation function
     if present.  If with_grad, then accumulate this node's gradient.
 
     Attributes:
-      function (string)  : A valid string of either an activation function (indicating that
-                           this node is in a hidden layer) or a criterion (indicating that
-                           this is an output node, or None (if this is an input node or a
-                           hidden node with no activation.
-      with_grad (boolean): Accumulate this node's gradient if True.
-      output (number)    : If accumulating the gradient, we need an output.
+      activation (function): An activation function.
+      with_grad (boolean)  : Accumulate this node's gradient if True.
+      criterion (function) : A function that is (single summand of a) of a criterion. 
+      output (number)      : If accumulating the gradient, we need an output.
     """
     assert output == None or with_grad, "If accumulating gradient, an output must be passed."
     if verbose: print("feeding foward. with_grad =", with_grad, "and function =", function)
@@ -90,7 +114,20 @@ class Node:
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
-    self.setState(sum_)
+    if function == None:
+      self.setState(sum_)
+    elif function == 'sigmoid':
+      self.setState(function(sum_))
+
+    # If criterion != None then output is a number and self is an output node so we add the
+    # contibution of the to the partials feeding into this node.
+    if criterion == 'MSE':
+      for inputLink in self.inputs:
+        inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
+    elif criterion == 'sigmoid-MSE':
+      for inputLink in self.inputs:
+        s = sigmoid(sum_)
+        inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
 
     # while we are feeding forward, add contribution of this example to the partials
     if function == 'MSE':
@@ -139,18 +176,22 @@ class Net:
     self.inputNodes = []
     self.hiddenLayers = [[]]
     self.outputNodes = []
-    self.activations = activations
-    self.criterion = criterion
+    self.activations = []
     self.batchsize = batchsize
 
     assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-    assert criterion in set(['MSE', 'sigmoid-MSE']),\
+
+    assert criterion in set(['MSE', 'MSE', 'softMax']),\
         "Currently, the criterion must be 'MSE or 'sigmoid-MSE'."
-    if len(nodes_per_layer) > 2:
-      assert activations[0] in set([None, 'sigmoid']), "No such activation."
+    assert criterion != 'softMax', "softMax not yet implemented."
+    self.criterion = set_criterion(criterion)
+
+    if len(nodes_per_layer) > 2:  # if there are hidden layers
+      assert activations[0] in set([None, 'sigmoid', 'ReLU']), "No such activation."
       assert len(activations) == len(nodes_per_layer) - 2,\
         "Length of activations list should be " + str(len(nodes_per_layer) - 2) + "."
+      self.activations = map(activate, activations)
 
     # Populate the input nodes
     if verbose: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
@@ -228,7 +269,6 @@ class Net:
 
   def backprop(self, learning_rate):
     for layer in range(len(self.hiddenLayers)):
-      print('layer is', layer)
       for node in self.hiddenLayers[-layer]:
         if verbose: print("updating weights for hidden layer", layer)
         node.adjustWeights(learning_rate, self.batchsize)
@@ -266,14 +306,36 @@ class Net:
 
 ################################
 
-# a convenient function that implements a training loop instances of Net.
-def train(net, lines_to_print = 30):
-  ...
- 
+# A convenient function that implements a loop for training instances of Net.
+# Mainly, it spews out the last lines_to_print current losses without the cost of computing
+# the current loss when you don't really need to see it's exact value.
+def train(net, xs, ys, batchsize, epochs, learning_rate, lines_to_print = 30):
+
+  indices = list(range(len(xs)))
+  printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
+
+  for i in range(epochs * batchsize):
+    random.shuffle(indices)
+    if verbose: print('shuffling')
+    xs = [xs[idx] for idx in indices]
+    ys = [ys[idx] for idx in indices]
+    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
+      start = j % num_examples
+      end = start + batchsize
+      in_  = (xs+xs[:batchsize])[start: end]
+      out  = (ys+ys[:batchsize])[start: end]
+      net.zeroGrads()
+      net.learn(in_, out, learning_rate)
+      if i >= printlns and j > num_examples - batchsize * 30:
+        loss = net.getTotalError(xs, ys)
+        print('current loss: {0:12f}'.format(loss))
+    if i <= printlns:
+      loss = net.getTotalError(xs, ys)
+      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+  return net
 
 if __name__ == '__main__':
 
-  import random
   num_examples = 20
 
   # generate some data
@@ -296,27 +358,8 @@ if __name__ == '__main__':
 
   epochs = 5000
   learning_rate = 0.05
-  indices = list(range(num_examples))
-  printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
 
-  for i in range(epochs * batchsize):
-    random.shuffle(indices)
-    if verbose: print('shuffling')
-    xs = [xs[idx] for idx in indices]
-    ys = [ys[idx] for idx in indices]
-    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
-      start = j % num_examples
-      end = start + batchsize
-      in_  = (xs+xs[:batchsize])[start: end]
-      out  = (ys+ys[:batchsize])[start: end]
-      net.zeroGrads()
-      net.learn(in_, out, learning_rate)
-      if i >= printlns and j > num_examples - batchsize * 30:
-        loss = net.getTotalError(xs, ys)
-        print('current loss: {0:12f}'.format(loss))
-    if i <= printlns:
-      loss = net.getTotalError(xs, ys)
-      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+  net = train(net, xs, ys, batchsize, epochs, learning_rate, lines_to_print = 30)
 
   def compute_r_squared(xs, ys, net):
     """
