@@ -8,7 +8,6 @@ import math, random
 debugging = False
 
 
-
 ####################  Some activations and their derivatives  #####################
 
 class activate:
@@ -33,9 +32,7 @@ class activate:
     self.df = derivative_dict.get(activation, '')
 
 
-
 ####################  Criteria and their derivatives  #####################
-
 
 class set_criterion:
 
@@ -53,9 +50,7 @@ class set_criterion:
     self.df = derivative_dict.get(criterion, '')
 
 
-
 ####################  The neural net  #####################
-
 
 class InputLink:
 
@@ -129,22 +124,18 @@ class Node:
 
     # If criterion != None then output is a number and self is an output node so we add the
     # contibution of the to the partials feeding into this node.
-    if criterion == 'MSE':
+    if criterion != None:
       for inputLink in self.inputs:
-        inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
-    elif criterion == 'sigmoid-MSE':
-      for inputLink in self.inputs:
-        s = sigmoid(sum_)
-        inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
+        inputLink.addToPartial(criterion.df(sum_, output) * inputLink.inputNode.state)
 
-    # while we are feeding forward, add contribution of this example to the partials
-    if function == 'MSE':
-      for inputLink in self.inputs:
-        inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
-    elif function == 'sigmoid-MSE':
-      for inputLink in self.inputs:
-        s = sigmoid(sum_)
-        inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
+
+    #if function == 'MSE':
+    #  for inputLink in self.inputs:
+    #    inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
+    #elif function == 'sigmoid-MSE':
+    #  for inputLink in self.inputs:
+    #    s = sigmoid(sum_)
+    #    inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate, batchsize):
     if debugging: print("adusting weights")
@@ -263,7 +254,7 @@ class Net:
             node.feedforward(function = None, with_grad = False, output = None)
       for node in self.outputNodes:
         if with_grad:
-          node.feedforward(function = self.criterion, with_grad = True, output = outputs[i])
+          node.feedforward(function = self.criterion, with_grad = True, output = outputs[i][0])
         else:
           node.feedforward(function = None, with_grad = False, output = None)
 
