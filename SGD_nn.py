@@ -5,48 +5,56 @@
 
 import math, random
 
-verbose = False
+debugging = False
 
-def sigmoid(x):
-  """ Return the value of the sigmoid function evaluated at the input x. """
-  return 1 / (1 + math.exp(-x))
 
-def d_sigmoid(y):
-  """
-  Return the deriviative of the sigmoid function as it depends on the y-value (not the x-value)
-  of a point on the graph of the sigmoid function: y = sigmoid(x).
-  """
-  return y * (1 - y)
 
-def ReLU(x):
-  """ Rectified Linear Unit """
-  return max(0, x)
+####################  Some activations and their derivatives  #####################
 
-def identity(x):
-  return x
+class activate:
 
-def softMax(x):
-  ...
+  def __init__(self, activation):
 
-def MSE(x, output):
-  return (x - output)**2
+    function_dict = {
+      'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
+      'ReLU': lambda x: max(0, x),
+      'id': lambda x: x,
+      None: lambda x: x,
+    }
+  
+    derivative_dict = {
+      'sigmoid': lambda y: y * (1 - y),   # note: this is a function of y = sigmoid(x)
+      'ReLU': lambda x: 0 if x <= 0 else 1, 
+      'id': lambda x: 1,
+      None: lambda x: 1,
+    }
+  
+    self.f = function_dict.get(activation, '')
+    self.df = derivative_dict.get(activation, '')
 
-def activate(activation):
-  activation_dict = {
-    'sigmoid': sigmoid,
-    'ReLU': ReLU,
-    'id': identity,
-    None: identity,
-  }
-  return activation_dict.get(activation, '')
 
-def set_criterion(activation):
-  activation_dict = {
-    'MSE': MSE,
-    'softMax': softMax,
-    'sigmoid': sigmoid,
-  }
-  return activation_dict.get(activation, '')
+
+####################  Criteria and their derivatives  #####################
+
+
+class set_criterion:
+
+  def __init__(self, criterion):
+
+    function_dict = {
+      'MSE': lambda x, output: (x - output)**2,
+    }
+  
+    derivative_dict = {
+      'MSE': lambda x, output: x - output  # no real need for the 2 here
+    }
+  
+    self.f = function_dict.get(criterion, '')
+    self.df = derivative_dict.get(criterion, '')
+
+
+
+####################  The neural net  #####################
 
 
 class InputLink:
@@ -64,7 +72,7 @@ class InputLink:
 
   def adjustWeight(self, learning_rate):
     self.weight = self.weight - learning_rate * self.partial
-    if verbose: print("adjusting weight, partial =", self.partial)
+    if debugging: print("adjusting weight, partial =", self.partial)
 
 
 class Node:
@@ -81,7 +89,7 @@ class Node:
   def __init__(self, nodeList, activation = None):
     self.inputs = []
     self.state = 0
-    if verbose: print("  node created")
+    if debugging: print("  node created")
     for node in nodeList:
       self.inputs.append(InputLink(node, 2 * random.random() - 1.0))
 
@@ -92,7 +100,7 @@ class Node:
     return self.state
 
   def zeroGradient(self):
-    if verbose: print("zeroing partials")
+    if debugging: print("zeroing partials")
     for inputLink in self.inputs:
       inputLink.zeroPartial()
 
@@ -108,7 +116,7 @@ class Node:
       output (number)      : If accumulating the gradient, we need an output.
     """
     assert output == None or with_grad, "If accumulating gradient, an output must be passed."
-    if verbose: print("feeding foward. with_grad =", with_grad, "and function =", function)
+    if debugging: print("feeding foward. with_grad =", with_grad, "and function =", function)
 
     # feedforward from all the inputs to this node
     sum_ = 0
@@ -139,7 +147,7 @@ class Node:
         inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate, batchsize):
-    if verbose: print("adusting weights")
+    if debugging: print("adusting weights")
     for inputLink in self.inputs:
       inputLink.adjustWeight(learning_rate / batchsize)
 
@@ -194,19 +202,19 @@ class Net:
       self.activations = map(activate, activations)
 
     # Populate the input nodes
-    if verbose: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
+    if debugging: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
     for node in range(self.nodes_per_layer[0]):
       self.inputNodes.append(Node([]))
 
     # Populate the hidden layers
     for layer in range(1,len(self.nodes_per_layer)-1):
-      if verbose:\
+      if debugging:\
         print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
       for node in range(self.nodes_per_layer[layer]):
         self.hiddenLayers[layer - 1].append(Node(self.inputNodes, activation = activations[layer - 1]))
 
     # Populate the ouput layer
-    if verbose: print("populating output layer with", self.nodes_per_layer[1], "node(s).")
+    if debugging: print("populating output layer with", self.nodes_per_layer[1], "node(s).")
     for node in range(self.nodes_per_layer[-1]):
       if len(self.nodes_per_layer) < 3:  # if no hidden layers
         self.outputNodes.append(Node(self.inputNodes, activation = None))
@@ -260,7 +268,7 @@ class Net:
           node.feedforward(function = None, with_grad = False, output = None)
 
   def zeroGrads(self):
-    if verbose: print("setting gradients to zero")
+    if debugging: print("setting gradients to zero")
     for layer in self.hiddenLayers:
       for node in layer:
         node.zeroGradient()
@@ -270,7 +278,7 @@ class Net:
   def backprop(self, learning_rate):
     for layer in range(len(self.hiddenLayers)):
       for node in self.hiddenLayers[-layer]:
-        if verbose: print("updating weights for hidden layer", layer)
+        if debugging: print("updating weights for hidden layer", layer)
         node.adjustWeights(learning_rate, self.batchsize)
     for node in self.outputNodes:
       node.adjustWeights(learning_rate, self.batchsize)
@@ -304,11 +312,12 @@ class Net:
       output = sigmoid(output)
     return output
 
-################################
 
-# A convenient function that implements a loop for training instances of Net.
-# Mainly, it spews out the last lines_to_print current losses without the cost of computing
-# the current loss when you don't really need to see it's exact value.
+#########################  Utilility functions ####################################
+
+# A convenient function that implements a loop for training instances of Net.  Mainly,
+# it spews out the last lines_to_print current losses without the cost of computing the
+# current loss when you don't really need to see it's exact value.
 def train(net, xs, ys, batchsize, epochs, learning_rate, lines_to_print = 30):
 
   indices = list(range(len(xs)))
@@ -316,7 +325,7 @@ def train(net, xs, ys, batchsize, epochs, learning_rate, lines_to_print = 30):
 
   for i in range(epochs * batchsize):
     random.shuffle(indices)
-    if verbose: print('shuffling')
+    if debugging: print('shuffling')
     xs = [xs[idx] for idx in indices]
     ys = [ys[idx] for idx in indices]
     for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
@@ -333,6 +342,9 @@ def train(net, xs, ys, batchsize, epochs, learning_rate, lines_to_print = 30):
       loss = net.getTotalError(xs, ys)
       print('current loss: {0:12f}'.format(loss), end='\b' * 26)
   return net
+
+
+###############  main  ################
 
 if __name__ == '__main__':
 
