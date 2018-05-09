@@ -18,7 +18,7 @@ Code summary:
   * [SGD_nn.py](SGD_nn.py): The building blocks of a feed forward neural net that trains via SGD (stochastic gradient descent).
     Along with some functions to create non-linearity, the following classes are defined:
     * `Net` -- The neural net, which is built from layers (lists) of instances of the `Node` class.
-    * `Node` -- essentially a list of instances of `InputLinks` along with some methods.
+    * `Node` -- essentially a list of instances of `InputLink` along with some methods.
     * `InputLink` -- a small class with attributes `inputNode`, `weight`, and `partial`, instances of which connect the
       instances of Node that make up the `Net`.
 
