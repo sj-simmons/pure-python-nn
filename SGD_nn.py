@@ -12,42 +12,48 @@ debugging = False
 
 class activate:
 
-  def __init__(self, activation):
+  # Some activation functions f(x):
+  func_dict = {
+    'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
+    'ReLU': lambda x: max(0, x),
+    'id': lambda x: x,
+    None: lambda x: x,
+  }
 
-    function_dict = {
-      'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
-      'ReLU': lambda x: max(0, x),
-      'id': lambda x: x,
-      None: lambda x: x,
-    }
+  # their derivatives df(x)/dx:
+  der_dict = {
+    'sigmoid': lambda y: y * (1 - y),   # note: this is a function of y = sigmoid(x)
+    'ReLU': lambda x: 0 if x <= 0 else 1, 
+    'id': lambda x: 1,
+    None: lambda x: 1,
+  }
+
+  def __init__(self, activation):
   
-    derivative_dict = {
-      'sigmoid': lambda y: y * (1 - y),   # note: this is a function of y = sigmoid(x)
-      'ReLU': lambda x: 0 if x <= 0 else 1, 
-      'id': lambda x: 1,
-      None: lambda x: 1,
-    }
-  
-    self.f = function_dict.get(activation, '')
-    self.df = derivative_dict.get(activation, '')
+    self.f = self.func_dict.get(activation, '')
+    self.df = self.der_dict.get(activation, '')
 
 
 ####################  Criteria and their derivatives  #####################
 
 class set_criterion:
 
-  def __init__(self, criterion):
+  # Criteria f(x):
+  crit_dict = {
+    'MSE': lambda x, output: (x - output)**2,
+  }
+  
+  # their deivative df(x)/dx up to a constant
+  der_dict = {
+    'MSE': lambda x, output: x - output
+  }
 
-    function_dict = {
-      'MSE': lambda x, output: (x - output)**2,
-    }
+  # df(g(x))/dx * g'(x)
+
+  def __init__(self, criterion):
   
-    derivative_dict = {
-      'MSE': lambda x, output: x - output  # no real need for the 2 here
-    }
-  
-    self.f = function_dict.get(criterion, '')
-    self.df = derivative_dict.get(criterion, '')
+    self.f = self.crit_dict.get(criterion, '')
+    self.df = self.der_dict.get(criterion, '')
 
 
 ####################  The neural net  #####################
@@ -99,7 +105,7 @@ class Node:
     for inputLink in self.inputs:
       inputLink.zeroPartial()
 
-  def feedforward(self, function = None, with_grad = False, criterion = None, output = None ):
+  def feedforward(self, activation = None, with_grad = False, criterion = None, output = None):
     """
     Feedforward for all the inputs to this instance of Node, applying the activation function
     if present.  If with_grad, then accumulate this node's gradient.
@@ -117,17 +123,14 @@ class Node:
     sum_ = 0
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
-    if function == None:
-      self.setState(sum_)
-    elif function == 'sigmoid':
-      self.setState(function(sum_))
+
+    self.setState(activation(sum_))
 
     # If criterion != None then output is a number and self is an output node so we add the
     # contibution of the to the partials feeding into this node.
     if criterion != None:
       for inputLink in self.inputs:
         inputLink.addToPartial(criterion.df(sum_, output) * inputLink.inputNode.state)
-
 
     #if function == 'MSE':
     #  for inputLink in self.inputs:
@@ -246,17 +249,17 @@ class Net:
     for i in range(len(inputs)):
       for j in range(len(inputs[i])): # feed in the inputs
         self.inputNodes[j].setState(inputs[i][j])
-      for layer in range(len(self.hiddenLayers)):
+      for layer in range(len(self.hiddenLayers)):  # feed forward through any hidden layers
         for node in self.hiddenLayers[layer]:
           if with_grad:
-            node.feedforward(function = self.activations[layer], with_grad = True, output = None)
+            node.feedforward(activation = self.activations[layer], with_grad = True, output = None)
           else:
-            node.feedforward(function = None, with_grad = False, output = None)
-      for node in self.outputNodes:
+            node.feedforward(activation = None, with_grad = False, output = None)
+      for node in self.outputNodes: # feed forward through outputs
         if with_grad:
-          node.feedforward(function = self.criterion, with_grad = True, output = outputs[i][0])
+          node.feedforward(activation = None, with_grad = True, criterion = self.criterion, output = outputs[i][0])
         else:
-          node.feedforward(function = None, with_grad = False, output = None)
+          node.feedforward(activation = None, with_grad = False, criterion = self.criterion, output = None)
 
   def zeroGrads(self):
     if debugging: print("setting gradients to zero")
