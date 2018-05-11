@@ -4,16 +4,33 @@
 # SGD (stochastic gradient descent).
 
 import math, random
+from functools import reduce
 
 debugging = False
-
 
 ####################  Some activations and their derivatives  #####################
 
 class activate:
+  """ 
+  An activation function class.
+
+  >>> activations = map(lambda s: activate(s), [None, 'id', 'ReLU', 'sigmoid'])
+  >>> [function.f(-7) for function in activations] # doctest:+ELLIPSIS
+  [-7, -7, 0, 0.000911...
+  >>> # The code above works but activations is a map object that is lazy evaluated
+  >>> # so that we cannot for example get our hands on the first activation 
+  >>> # so that  list(activations)[0]  thows an exception.
+  >>> #
+  >>> # For our application below, Do this instead:
+  >>> activations = [activate(s) for s in [None, 'id', 'ReLU', 'sigmoid']]
+  >>> activations[0] # doctest:+ELLIPSIS
+  <__main__.activate objec...
+  >>> activations[2].f(-3)
+  0
+  """
 
   # Some activation functions f(x):
-  func_dict = {
+  funcs = {
     'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
     'ReLU': lambda x: max(0, x),
     'id': lambda x: x,
@@ -21,7 +38,7 @@ class activate:
   }
 
   # their derivatives df(x)/dx:
-  der_dict = {
+  ders = {
     'sigmoid': lambda y: y * (1 - y),   # note: this is a function of y = sigmoid(x)
     'ReLU': lambda x: 0 if x <= 0 else 1, 
     'id': lambda x: 1,
@@ -30,21 +47,20 @@ class activate:
 
   def __init__(self, activation):
   
-    self.f = self.func_dict.get(activation, '')
-    self.df = self.der_dict.get(activation, '')
-
+    self.f = self.funcs.get(activation, '')
+    self.df = self.ders.get(activation, '')
 
 ####################  Criteria and their derivatives  #####################
 
 class set_criterion:
 
   # Criteria f(x):
-  crit_dict = {
+  crits = {
     'MSE': lambda x, output: (x - output)**2,
   }
   
   # their deivative df(x)/dx up to a constant
-  der_dict = {
+  ders = {
     'MSE': lambda x, output: x - output
   }
 
@@ -52,9 +68,8 @@ class set_criterion:
 
   def __init__(self, criterion):
   
-    self.f = self.crit_dict.get(criterion, '')
-    self.df = self.der_dict.get(criterion, '')
-
+    self.f = self.crits.get(criterion, '')
+    self.df = self.ders.get(criterion, '')
 
 ####################  The neural net  #####################
 
@@ -87,7 +102,7 @@ class Node:
                     applied.
   """
 
-  def __init__(self, nodeList, activation = None):
+  def __init__(self, nodeList):
     self.inputs = []
     self.state = 0
     if debugging: print("  node created")
@@ -105,7 +120,7 @@ class Node:
     for inputLink in self.inputs:
       inputLink.zeroPartial()
 
-  def feedforward(self, activation = None, with_grad = False, criterion = None, output = None):
+  def feedforward(self, activation, with_grad = False, criterion = None, output = None):
     """
     Feedforward for all the inputs to this instance of Node, applying the activation function
     if present.  If with_grad, then accumulate this node's gradient.
@@ -114,9 +129,12 @@ class Node:
       activation (function): An activation function.
       with_grad (boolean)  : Accumulate this node's gradient if True.
       criterion (function) : A function that is (single summand of a) of a criterion. 
-      output (number)      : If accumulating the gradient, we need an output.
+      output (number)      : If accumulating the gradient, we need an example output.
     """
     assert output == None or with_grad, "If accumulating gradient, an output must be passed."
+    assert criterion == None or output != None,\
+                 "Output node has no example output to compare to: " +\
+                           "criterion is " + str(criterion) + " but output is " + str(output)
     if debugging: print("feeding foward. with_grad =", with_grad, "and function =", function)
 
     # feedforward from all the inputs to this node
@@ -124,10 +142,10 @@ class Node:
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
 
-    self.setState(activation(sum_))
+    self.setState(activation.f(sum_))
 
     # If criterion != None then output is a number and self is an output node so we add the
-    # contibution of the to the partials feeding into this node.
+    # contribution of the to the partials feeding into this node.
     if criterion != None:
       for inputLink in self.inputs:
         inputLink.addToPartial(criterion.df(sum_, output) * inputLink.inputNode.state)
@@ -141,7 +159,7 @@ class Node:
     #    inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate, batchsize):
-    if debugging: print("adusting weights")
+    if debugging: print("adjusting weights")
     for inputLink in self.inputs:
       inputLink.adjustWeight(learning_rate / batchsize)
 
@@ -167,12 +185,16 @@ class Net:
     One recovers stochastic gradient descent using batchsize = 1; and gradient descent by
     setting batchsize equal to the number of examples in the training data.
 
+    Currently supported activations: 'linear' or 'sigmoid',
+    Currently supported criteria: 'MSE' (mean squared error)
+
     Attributes
       nodes_per_layer (list):
-      activations (List)    : A list of strings, currently each either 'linear' or 'sigmoid',
-                              one for each hidden layer.
+      activations (List)    : A list of strings one for each hidden layer followed by one
+                              for the output layer.
       batchsize (int)       : The number of examples in a batch.
-      criterion (string)    : Either 'MSE' or 'sigmoid-MSE'.  TODO: add 'LogSoftMax'.
+      criterion (string)    : A string specifying the criterion to use when gauging accuracy
+                              of the output of model.
     """
     self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
@@ -183,37 +205,36 @@ class Net:
 
     assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
+    assert criterion in set_criterion.crits.keys() ,\
+                       "Invalid criterion: must be one of " + str(set_criterion.crits.keys())
+    assert len(activations) == len(nodes_per_layer) - 1,\
+        "Length of activations list should be " + str(len(nodes_per_layer) - 1) +\
+                                                               "not" + str(len(activations))+"."
+    assert reduce(lambda x,y: x and y, map(lambda s: s in activate.funcs.keys(), activations)),\
+                       "No such activation: must be one of " + str(activate.funcs.keys())
 
-    assert criterion in set(['MSE', 'MSE', 'softMax']),\
-        "Currently, the criterion must be 'MSE or 'sigmoid-MSE'."
-    assert criterion != 'softMax', "softMax not yet implemented."
     self.criterion = set_criterion(criterion)
+    self.activations = [activate(s) for s in activations]
 
-    if len(nodes_per_layer) > 2:  # if there are hidden layers
-      assert activations[0] in set([None, 'sigmoid', 'ReLU']), "No such activation."
-      assert len(activations) == len(nodes_per_layer) - 2,\
-        "Length of activations list should be " + str(len(nodes_per_layer) - 2) + "."
-      self.activations = map(activate, activations)
-
-    # Populate the input nodes
+    # Populate the input nodes:
     if debugging: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
     for node in range(self.nodes_per_layer[0]):
       self.inputNodes.append(Node([]))
 
-    # Populate the hidden layers
+    # Populate the hidden layers:
     for layer in range(1,len(self.nodes_per_layer)-1):
       if debugging:\
         print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
       for node in range(self.nodes_per_layer[layer]):
-        self.hiddenLayers[layer - 1].append(Node(self.inputNodes, activation = activations[layer - 1]))
+        self.hiddenLayers[layer - 1].append(Node(self.inputNodes))
 
-    # Populate the ouput layer
+    # Populate the output layer:
     if debugging: print("populating output layer with", self.nodes_per_layer[1], "node(s).")
     for node in range(self.nodes_per_layer[-1]):
       if len(self.nodes_per_layer) < 3:  # if no hidden layers
-        self.outputNodes.append(Node(self.inputNodes, activation = None))
+        self.outputNodes.append(Node(self.inputNodes))
       else:
-        self.outputNodes.append(Node(self.hiddenLayers[-1], activations[-1]))
+        self.outputNodes.append(Node(self.hiddenLayers[-1]))
 
   def learn(self, inputs, outputs, learning_rate = .1):
     """
@@ -225,8 +246,8 @@ class Net:
       learning_rate (number): Scaling factor for the gradient during descent.
     """
 
-    assert(len(inputs) == self.batchsize), "Number of inputs is " + str(len(inputs)) +\
-                                           " but batchsize is " + str(self.batchsize)
+    assert(len(inputs) == self.batchsize),\
+     "Number of inputs is " + str(len(inputs)) + " but batchsize is " + str(self.batchsize)
     assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same."
 
     self.forward(inputs, outputs, with_grad = True)
@@ -254,12 +275,12 @@ class Net:
           if with_grad:
             node.feedforward(activation = self.activations[layer], with_grad = True, output = None)
           else:
-            node.feedforward(activation = None, with_grad = False, output = None)
+            node.feedforward(activation = self.activations[layer], with_grad = False, output = None)
       for node in self.outputNodes: # feed forward through outputs
         if with_grad:
-          node.feedforward(activation = None, with_grad = True, criterion = self.criterion, output = outputs[i][0])
+          node.feedforward(activation = self.activations[-1], with_grad = True, criterion = self.criterion, output = outputs[i][0])
         else:
-          node.feedforward(activation = None, with_grad = False, criterion = self.criterion, output = None)
+          node.feedforward(activation = self.activations[-1])
 
   def zeroGrads(self):
     if debugging: print("setting gradients to zero")
@@ -306,7 +327,6 @@ class Net:
       output = sigmoid(output)
     return output
 
-
 #########################  Utilility functions ####################################
 
 # A convenient function that implements a loop for training instances of Net.  Mainly,
@@ -337,11 +357,15 @@ def train(net, xs, ys, batchsize, epochs, learning_rate, lines_to_print = 30):
       print('current loss: {0:12f}'.format(loss), end='\b' * 26)
   return net
 
-
 ###############  main  ################
 
 if __name__ == '__main__':
 
+  ### first run the unit tests ###
+  import doctest
+  doctest.testmod()
+
+  ### now generate some data and solve a linear regression ###
   num_examples = 20
 
   # generate some data
@@ -360,7 +384,7 @@ if __name__ == '__main__':
   ystdevs, ys = normalize(ys) # and here
 
   batchsize = 4
-  net = Net([1,1], batchsize = batchsize, criterion = 'MSE')
+  net = Net([1,3,1], activations = [None, None], batchsize = batchsize, criterion = 'MSE')
 
   epochs = 5000
   learning_rate = 0.05
