@@ -57,6 +57,7 @@ if __name__ == '__main__':
     # Create an instance of the neural net class with 1 input and 1 output, no hidden layer,
     # no activation function, mean squared error criterion.
     net = Net([1,1], activations = [None], batchsize = 1, loss = 'MSE')
+    print(net)
 
     # An un-important helper function to sensibly print the current total error.
     def printloss(loss, idx, epochs, num_last_lines = 0):

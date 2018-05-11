@@ -21,6 +21,7 @@ ystdevs, ys = normalize(ys)
 
 batchsize = 20
 net = Net([13,1], activations = [None], batchsize = batchsize, loss = 'MSE')
+print(net)
 
 epochs = 20 
 learning_rate = 0.02

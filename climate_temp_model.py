@@ -32,6 +32,7 @@ ystdevs, ys = normalize(ys)
 # criterion.
 batchsize = 32 
 net = Net([2,1], activations = [None],  batchsize = batchsize, loss = 'MSE')
+print(net)
 
 epochs = 10 
 learning_rate = 0.1
