@@ -100,7 +100,6 @@ class InputLink:
     self.weight = self.weight - learning_rate * self.partial
     if debugging: print("adjusting weight, partial =", self.partial)
 
-
 class Node:
   """
   A Node in a neural network.
@@ -150,13 +149,14 @@ class Node:
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
 
-    self.setState(activation.f(sum_))
+    y = activation.f(sum_)
+    self.setState(y)
 
     # If loss != None then self is an output node and output is a number so we add the
     # contribution of the to the partials feeding into this node.
     if loss != None:
       for inputLink in self.inputs:
-        inputLink.addToPartial(loss.df(sum_, output) * inputLink.inputNode.state)
+        inputLink.addToPartial(loss.df(y, output) * activation.df(y) * inputLink.inputNode.state)
 
     #if function == 'MSE':
     #  for inputLink in self.inputs:
@@ -182,7 +182,6 @@ class Node:
     for inputLink in self.inputs:
       sum_squared_error += (self.state - inputLink.inputNode.state)**2 / len(self.inputs)
     return sum_squared_error
-
 
 class Net:
 
@@ -315,11 +314,10 @@ class Net:
     """
     assert len(inputs) == len(outputs), "Length on inputs and outputs must be equal."
 
-    self.forward(inputs)
     total_error = 0
-    for input in inputs:
-      for idx in range(len(self.outputNodes)):
-        total_error += (self.getOutput() - outputs[idx][0])**2
+    for input_, output in zip(inputs, outputs) :
+      self.forward([input_])
+      total_error += self.loss.f(self.getOutput(), output[0])
     return total_error / len(inputs)
 
   def getWeights(self):
@@ -329,10 +327,7 @@ class Net:
     return self.outputNodes[0].getWeights()
 
   def getOutput(self):
-    output = self.outputNodes[0].getState()
-    if self.loss == 'sigmoid':
-      output = sigmoid(output)
-    return output
+    return self.outputNodes[0].getState()
 
 #########################  Utilility functions ####################################
 
@@ -391,7 +386,7 @@ if __name__ == '__main__':
   ystdevs, ys = normalize(ys) # and here
 
   batchsize = 4
-  net = Net([1,2,1], activations = ['ReLU', None], batchsize = batchsize, loss = 'MSE')
+  net = Net([1,1], activations = [None], batchsize = batchsize, loss = 'MSE')
 
   epochs = 5000
   learning_rate = 0.05
@@ -418,8 +413,6 @@ if __name__ == '__main__':
 
   print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
  
-  exit()
-
   weights = net.getWeights()
   weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs)
 
