@@ -19,11 +19,11 @@ xstdevs, xs = normalize(xs)
 ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
-batchsize = 50
-net = Net([13,1], batchsize = batchsize, criterion = 'MSE')
+batchsize = 20
+net = Net([13,1], activations = [None], batchsize = batchsize, loss = 'MSE')
 
 epochs = 20 
-learning_rate = 0.03
+learning_rate = 0.02
 num_examples = len(xs)
 indices = list(range(num_examples))
 printlns = epochs*batchsize-int(30*batchsize/num_examples)-1

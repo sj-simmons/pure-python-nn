@@ -44,7 +44,7 @@ for i in range(num_samples):
     xs, ys = generate_data(m = 2, b = 7, stdev = 20, num_examples = 20) # generate data
 
     # Find the least squares reg line using stochastic gradient descent.
-    b, m = find_least_squares_reg_line(xs, ys, epochs = 100, learning_rate = 0.1)
+    b, m = find_least_squares_reg_line(xs, ys, epochs = 50, learning_rate = 0.1)
 
     slopes.append(m) # record slope
     intercepts.append(b) # record intercept

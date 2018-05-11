@@ -66,7 +66,7 @@ if __name__ == '__main__':
         else:
             print('current loss: {0:12f}'.format(loss))
 
-    epochs = 100 
+    epochs = 50
     learning_rate = 0.1
 
     # Now train the neural net:

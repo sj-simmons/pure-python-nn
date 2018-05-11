@@ -33,8 +33,8 @@ ystdevs, ys = normalize(ys)
 batchsize = 32 
 net = Net([2,1], activations = [None],  batchsize = batchsize, loss = 'MSE')
 
-epochs = 2000
-learning_rate = 0.01
+epochs = 10 
+learning_rate = 0.1
 num_examples = len(xs)
 indices = list(range(num_examples))
 printlns = epochs*batchsize-int(30*batchsize/num_examples)-1

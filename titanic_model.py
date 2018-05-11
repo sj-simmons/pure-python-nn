@@ -26,7 +26,7 @@ xstdevs, xs = normalize(xs)
 #xs = [[1]+x for x in xs]  # now 9 inputs
 
 batchsize = 10
-net = Net([6,1], batchsize = batchsize, criterion = 'sigmoid-MSE')
+net = Net([6,1], activations = [None], batchsize = batchsize, loss = 'MSE')
 
 epochs = 20
 learning_rate = 0.1
