@@ -29,7 +29,7 @@ class activate:
   0
   """
 
-  # Some activation functions f(x):
+  # Some activation functions, f(x):
   funcs = {
     'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
     'ReLU': lambda x: max(0, x),
@@ -37,12 +37,21 @@ class activate:
     None: lambda x: x,
   }
 
-  # their derivatives df(x)/dx:
+  # Their derivatives, f'(y):
+  #
+  # Note: It's efficient to compute the derivative of the sigmoid when it's expressed as a 
+  # function of y = sigmoid(x).  To make our code in the neural net classes nicer, we write
+  # all the derivatives below as function of the output of the corresponding activation 
+  # function.  So if f(x) is the activation function in question, the derivative below is
+  # actually (d/dx)(f(x)) written as a function of y = f(x).  This is what we denote by f'(y).
+  #
+  # Now suppose that we want to take the derivative of g(f(x)) with respect to x.  Using
+  # the chain rule we get:  (d/dy)(g(y)) * (d/dx)(f(x)) = g'(y) * f'(y).
   ders = {
-    'sigmoid': lambda y: y * (1 - y),   # note: this is a function of y = sigmoid(x)
-    'ReLU': lambda x: 0 if x <= 0 else 1, 
-    'id': lambda x: 1,
-    None: lambda x: 1,
+    'sigmoid': lambda y: y * (1 - y),   
+    'ReLU': lambda y: 0 if y == 0 else 1, 
+    'id': lambda y: 1,
+    None: lambda y: 1,
   }
 
   def __init__(self, activation):
@@ -50,26 +59,27 @@ class activate:
     self.f = self.funcs.get(activation, '')
     self.df = self.ders.get(activation, '')
 
-####################  Criteria and their derivatives  #####################
+####################  Loss functions and their derivatives  #####################
 
-class set_criterion:
+class set_loss:
 
-  # Criteria f(x):
-  crits = {
-    'MSE': lambda x, output: (x - output)**2,
+  # Some loss functions J(y, output) (for one example):
+  #
+  # We write these as functions of y, which is consistent with the discussion above where g(y)
+  # is replaced with J(y, output). 
+  losses = {
+    'MSE': lambda y, output: (y - output)**2,
   }
   
-  # their deivative df(x)/dx up to a constant
+  # their derivative dJ(y)/dy up to a constant
   ders = {
-    'MSE': lambda x, output: x - output
+    'MSE': lambda y, output: y - output
   }
 
-  # df(g(x))/dx * g'(x)
-
-  def __init__(self, criterion):
+  def __init__(self, loss):
   
-    self.f = self.crits.get(criterion, '')
-    self.df = self.ders.get(criterion, '')
+    self.f = self.losses.get(loss, '')
+    self.df = self.ders.get(loss, '')
 
 ####################  The neural net  #####################
 
@@ -98,7 +108,7 @@ class Node:
   Attributes:
     inputs (list) : A list of instances of InputLists representing all the Nodes in the neural
                     net that 'feed into' this node.
-    state (number): Note: for an output node this is the state BEFORE the criterion is
+    state (number): Note: for an output node this is the state BEFORE the loss function is
                     applied.
   """
 
@@ -120,7 +130,7 @@ class Node:
     for inputLink in self.inputs:
       inputLink.zeroPartial()
 
-  def feedforward(self, activation, with_grad = False, criterion = None, output = None):
+  def feedforward(self, activation, with_grad = False, loss = None, output = None):
     """
     Feedforward for all the inputs to this instance of Node, applying the activation function
     if present.  If with_grad, then accumulate this node's gradient.
@@ -128,14 +138,12 @@ class Node:
     Attributes:
       activation (function): An activation function.
       with_grad (boolean)  : Accumulate this node's gradient if True.
-      criterion (function) : A function that is (single summand of a) of a criterion. 
+      loss (function)      : A function that is (single summand of a) of a loss function. 
       output (number)      : If accumulating the gradient, we need an example output.
     """
     assert output == None or with_grad, "If accumulating gradient, an output must be passed."
-    assert criterion == None or output != None,\
-                 "Output node has no example output to compare to: " +\
-                           "criterion is " + str(criterion) + " but output is " + str(output)
-    if debugging: print("feeding foward. with_grad =", with_grad, "and function =", function)
+    assert loss == None or output != None, "Output node has no example output to compare to: "\
+                                     + "loss is " + str(loss) + " but output is " + str(output)
 
     # feedforward from all the inputs to this node
     sum_ = 0
@@ -144,11 +152,11 @@ class Node:
 
     self.setState(activation.f(sum_))
 
-    # If criterion != None then output is a number and self is an output node so we add the
+    # If loss != None then self is an output node and output is a number so we add the
     # contribution of the to the partials feeding into this node.
-    if criterion != None:
+    if loss != None:
       for inputLink in self.inputs:
-        inputLink.addToPartial(criterion.df(sum_, output) * inputLink.inputNode.state)
+        inputLink.addToPartial(loss.df(sum_, output) * inputLink.inputNode.state)
 
     #if function == 'MSE':
     #  for inputLink in self.inputs:
@@ -178,23 +186,23 @@ class Node:
 
 class Net:
 
-  def __init__(self, nodes_per_layer, activations = [], batchsize = 1, criterion = 'MSE'):
+  def __init__(self, nodes_per_layer, activations = [], batchsize = 1, loss = 'MSE'):
     """
     A neural network class.
 
     One recovers stochastic gradient descent using batchsize = 1; and gradient descent by
     setting batchsize equal to the number of examples in the training data.
 
-    Currently supported activations: 'linear' or 'sigmoid',
-    Currently supported criteria: 'MSE' (mean squared error)
+    Currently supported activations: 'None'(same as 'id'), 'ReLU', and 'sigmoid',
+    Currently supported loss functins: 'MSE', 'sigmoid-MSE' (MSE stands for mean squared error)
 
     Attributes
       nodes_per_layer (list):
       activations (List)    : A list of strings one for each hidden layer followed by one
                               for the output layer.
       batchsize (int)       : The number of examples in a batch.
-      criterion (string)    : A string specifying the criterion to use when gauging accuracy
-                              of the output of model.
+      loss (string)         : A string specifying the loss function to use when gauging
+                              accuracy of the output of model.
     """
     self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
@@ -203,17 +211,16 @@ class Net:
     self.activations = []
     self.batchsize = batchsize
 
-    assert len(nodes_per_layer) <= 3, "At most 3 layers for now."
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-    assert criterion in set_criterion.crits.keys() ,\
-                       "Invalid criterion: must be one of " + str(set_criterion.crits.keys())
+    assert loss in set_loss.losses.keys() ,\
+                       "Invalid loss fn: must be one of " + str(set_loss.losses.keys())
     assert len(activations) == len(nodes_per_layer) - 1,\
         "Length of activations list should be " + str(len(nodes_per_layer) - 1) +\
                                                                "not" + str(len(activations))+"."
     assert reduce(lambda x,y: x and y, map(lambda s: s in activate.funcs.keys(), activations)),\
                        "No such activation: must be one of " + str(activate.funcs.keys())
 
-    self.criterion = set_criterion(criterion)
+    self.loss = set_loss(loss)
     self.activations = [activate(s) for s in activations]
 
     # Populate the input nodes:
@@ -222,7 +229,7 @@ class Net:
       self.inputNodes.append(Node([]))
 
     # Populate the hidden layers:
-    for layer in range(1,len(self.nodes_per_layer)-1):
+    for layer in range(1,len(self.nodes_per_layer)-2):
       if debugging:\
         print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
       for node in range(self.nodes_per_layer[layer]):
@@ -265,7 +272,7 @@ class Net:
 
     assert len(inputs[0]) == len(self.inputNodes),\
         "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
-        " got " + str(len(inputs[0])) + "."
+                                                                " got " + str(len(inputs[0])) + "."
 
     for i in range(len(inputs)):
       for j in range(len(inputs[i])): # feed in the inputs
@@ -278,7 +285,7 @@ class Net:
             node.feedforward(activation = self.activations[layer], with_grad = False, output = None)
       for node in self.outputNodes: # feed forward through outputs
         if with_grad:
-          node.feedforward(activation = self.activations[-1], with_grad = True, criterion = self.criterion, output = outputs[i][0])
+          node.feedforward(activation = self.activations[-1], with_grad = True, loss = self.loss, output = outputs[i][0])
         else:
           node.feedforward(activation = self.activations[-1])
 
@@ -323,7 +330,7 @@ class Net:
 
   def getOutput(self):
     output = self.outputNodes[0].getState()
-    if self.criterion == 'sigmoid':
+    if self.loss == 'sigmoid':
       output = sigmoid(output)
     return output
 
@@ -384,7 +391,7 @@ if __name__ == '__main__':
   ystdevs, ys = normalize(ys) # and here
 
   batchsize = 4
-  net = Net([1,3,1], activations = [None, None], batchsize = batchsize, criterion = 'MSE')
+  net = Net([1,2,1], activations = ['ReLU', None], batchsize = batchsize, loss = 'MSE')
 
   epochs = 5000
   learning_rate = 0.05
@@ -410,6 +417,8 @@ if __name__ == '__main__':
     return 1.0-SS_E/SS_T
 
   print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
+ 
+  exit()
 
   weights = net.getWeights()
   weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs)

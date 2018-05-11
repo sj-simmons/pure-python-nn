@@ -31,7 +31,7 @@ ystdevs, ys = normalize(ys)
 # An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
 # criterion.
 batchsize = 32 
-net = Net([2,1], activations = [None],  batchsize = batchsize, criterion = 'MSE')
+net = Net([2,1], activations = [None],  batchsize = batchsize, loss = 'MSE')
 
 epochs = 2000
 learning_rate = 0.01
