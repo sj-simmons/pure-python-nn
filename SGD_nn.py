@@ -221,13 +221,13 @@ class Net:
                        "No such activation: must be one of " + str(activate.funcs.keys())
 
     # build a string representing the model
-    self.string += "  layer 0: " + str(nodes_per_layer[0]) + " input(s)\n"
+    self.string += "  layer 1: " + str(nodes_per_layer[0]) + " input(s)\n"
     for i in range(1, len(nodes_per_layer) - 1):
-      self.string += "  layer " + str(i) +": " + str(nodes_per_layer[i])\
-                     + " nodes; activation: " + str(activations[i]) + "\n"
+      self.string += "  layer " + str(i+1) +": " + str(nodes_per_layer[i])\
+                     + " nodes;  activation: " + str(activations[i]) + "\n"
     self.string += "  layer " + str(len(nodes_per_layer)) + ": " + str(nodes_per_layer[-1])\
-                   + " node(s); " + " activation: " + str(activations[-1])\
-                   + "; loss function: " + str(loss) + ".\n"
+                   + " output node(s); " + " activation: " + str(activations[-1])\
+                   + ";  loss function: " + str(loss) + ".\n"
 
     self.loss = set_loss(loss)
     self.activations = [activate(s) for s in activations]
