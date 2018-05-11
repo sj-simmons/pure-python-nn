@@ -209,15 +209,25 @@ class Net:
     self.outputNodes = []
     self.activations = []
     self.batchsize = batchsize
+    self.string = '\nThe model:\n'
 
     assert nodes_per_layer[-1] == 1, "At most one output for now."
     assert loss in set_loss.losses.keys() ,\
-                       "Invalid loss fn: must be one of " + str(set_loss.losses.keys())
+           "Invalid loss fn: must be one of " + str(set_loss.losses.keys())
     assert len(activations) == len(nodes_per_layer) - 1,\
-        "Length of activations list should be " + str(len(nodes_per_layer) - 1) +\
-                                                               "not" + str(len(activations))+"."
+           "Length of activations list should be " + str(len(nodes_per_layer) - 1) +\
+           "not" + str(len(activations))+"."
     assert reduce(lambda x,y: x and y, map(lambda s: s in activate.funcs.keys(), activations)),\
                        "No such activation: must be one of " + str(activate.funcs.keys())
+
+    # build a string representing the model
+    self.string += "  layer 0: " + str(nodes_per_layer[0]) + " input(s)\n"
+    for i in range(1, len(nodes_per_layer) - 1):
+      self.string += "  layer " + str(i) +": " + str(nodes_per_layer[i])\
+                     + " nodes; activation: " + str(activations[i]) + "\n"
+    self.string += "  layer " + str(len(nodes_per_layer)) + ": " + str(nodes_per_layer[-1])\
+                   + " node(s); " + " activation: " + str(activations[-1])\
+                   + "; loss function: " + str(loss) + ".\n"
 
     self.loss = set_loss(loss)
     self.activations = [activate(s) for s in activations]
@@ -329,6 +339,10 @@ class Net:
   def getOutput(self):
     return self.outputNodes[0].getState()
 
+  def __str__(self):
+    return self.string
+           
+
 #########################  Utilility functions ####################################
 
 # A convenient function that implements a loop for training instances of Net.  Mainly,
@@ -387,6 +401,7 @@ if __name__ == '__main__':
 
   batchsize = 4
   net = Net([1,1], activations = [None], batchsize = batchsize, loss = 'MSE')
+  print(net)
 
   epochs = 5000
   learning_rate = 0.05
