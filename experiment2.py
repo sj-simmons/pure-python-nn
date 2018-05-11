@@ -18,7 +18,7 @@ def find_least_squares_reg_line(xs, ys, epochs, learning_rate):
     y_stdevs, ys = normalize(ys) # and here
 
     # create an instance of the neural net class
-    net = Net([1,1], criterion = "MSE")
+    net = Net([1,1], activations = [None], criterion = "MSE")
 
     # Now train the neural net:
     for j in range(epochs):
