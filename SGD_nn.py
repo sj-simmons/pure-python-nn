@@ -11,17 +11,17 @@ debugging = False
 ####################  Some activations and their derivatives  #####################
 
 class activate:
-  """ 
+  """
   An activation function class.
 
   >>> activations = map(lambda s: activate(s), [None, 'id', 'ReLU', 'sigmoid'])
   >>> [function.f(-7) for function in activations] # doctest:+ELLIPSIS
   [-7, -7, 0, 0.000911...
-  >>> # The code above works but activations is a map object that is lazy evaluated
-  >>> # so that we cannot for example get our hands on the first activation 
-  >>> # so that  list(activations)[0]  thows an exception.
+  >>> # The code above works but activations is a map object that is lazy evaluated;
+  >>> # so we cannot for example get our hands on the first activation,
+  >>> # so that   list(activations)[0]  thows an exception.
   >>> #
-  >>> # For our application below, Do this instead:
+  >>> # For our application below, do this instead:
   >>> activations = [activate(s) for s in [None, 'id', 'ReLU', 'sigmoid']]
   >>> activations[0] # doctest:+ELLIPSIS
   <__main__.activate objec...
@@ -39,23 +39,23 @@ class activate:
 
   # Their derivatives, f'(y):
   #
-  # Note: It's efficient to compute the derivative of the sigmoid when it's expressed as a 
+  # Note: It's efficient to compute the derivative of the sigmoid when it's expressed as a
   # function of y = sigmoid(x).  To make our code in the neural net classes nicer, we write
-  # all the derivatives below as function of the output of the corresponding activation 
+  # all the derivatives below as function of the output of the corresponding activation
   # function.  So if f(x) is the activation function in question, the derivative below is
   # actually (d/dx)(f(x)) written as a function of y = f(x).  This is what we denote by f'(y).
   #
   # Now suppose that we want to take the derivative of g(f(x)) with respect to x.  Using
   # the chain rule we get:  (d/dy)(g(y)) * (d/dx)(f(x)) = g'(y) * f'(y).
   ders = {
-    'sigmoid': lambda y: y * (1 - y),   
-    'ReLU': lambda y: 0 if y == 0 else 1, 
+    'sigmoid': lambda y: y * (1 - y),
+    'ReLU': lambda y: 0 if y == 0 else 1,
     'id': lambda y: 1,
     None: lambda y: 1,
   }
 
   def __init__(self, activation):
-  
+
     self.f = self.funcs.get(activation, '')
     self.df = self.ders.get(activation, '')
 
@@ -66,18 +66,18 @@ class set_loss:
   # Some loss functions J(y, output) (for one example):
   #
   # We write these as functions of y, which is consistent with the discussion above where g(y)
-  # is replaced with J(y, output). 
+  # is replaced with J(y, output).
   losses = {
     'MSE': lambda y, output: (y - output)**2,
   }
-  
+
   # their derivative dJ(y)/dy up to a constant
   ders = {
     'MSE': lambda y, output: y - output
   }
 
   def __init__(self, loss):
-  
+
     self.f = self.losses.get(loss, '')
     self.df = self.ders.get(loss, '')
 
@@ -86,17 +86,21 @@ class set_loss:
 class InputLink:
 
   def __init__ (self, node, wt):
+
     self.inputNode = node  # node is an instance of Node
     self.weight = wt  # wt is a number
     self.partial = 0
 
   def zeroPartial(self):
+
     self.partial = 0
 
   def addToPartial(self, x):
+
     self.partial += x
 
   def adjustWeight(self, learning_rate):
+
     self.weight = self.weight - learning_rate * self.partial
     if debugging: print("adjusting weight, partial =", self.partial)
 
@@ -112,6 +116,7 @@ class Node:
   """
 
   def __init__(self, nodeList):
+
     self.inputs = []
     self.state = 0
     if debugging: print("  node created")
@@ -119,12 +124,15 @@ class Node:
       self.inputs.append(InputLink(node, 2 * random.random() - 1.0))
 
   def setState(self, value):
+
     self.state = value
 
   def getState(self):
+
     return self.state
 
   def zeroGradient(self):
+
     if debugging: print("zeroing partials")
     for inputLink in self.inputs:
       inputLink.zeroPartial()
@@ -137,7 +145,7 @@ class Node:
     Attributes:
       activation (function): An activation function.
       with_grad (boolean)  : Accumulate this node's gradient if True.
-      loss (function)      : A function that is (single summand of a) of a loss function. 
+      loss (function)      : A function that is (single summand of a) of a loss function.
       output (number)      : If accumulating the gradient, we need an example output.
     """
     assert output == None or with_grad, "If accumulating gradient, an output must be passed."
@@ -157,27 +165,25 @@ class Node:
     if loss != None:
       for inputLink in self.inputs:
         inputLink.addToPartial(loss.df(y, output) * activation.df(y) * inputLink.inputNode.state)
-
-    #if function == 'MSE':
-    #  for inputLink in self.inputs:
-    #    inputLink.addToPartial((sum_ - output[0]) * inputLink.inputNode.state)
-    #elif function == 'sigmoid-MSE':
-    #  for inputLink in self.inputs:
-    #    s = sigmoid(sum_)
-    #    inputLink.addToPartial((s - output[0]) * d_sigmoid(s) * inputLink.inputNode.state)
+    else: # this is a hidden layer
+      for inputLink in self.inputs:
+        inputLink.addToPartial(activation.df(y) * inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate, batchsize):
+
     if debugging: print("adjusting weights")
     for inputLink in self.inputs:
       inputLink.adjustWeight(learning_rate / batchsize)
 
   def getWeights(self):
+
     weights = []
     for node in self.inputs:
       weights.append(node.weight)
     return weights
 
   def getTotalError(self):
+
     sum_squared_error = 0
     for inputLink in self.inputs:
       sum_squared_error += (self.state - inputLink.inputNode.state)**2 / len(self.inputs)
@@ -224,7 +230,7 @@ class Net:
     self.string += "  layer 1: " + str(nodes_per_layer[0]) + " input(s)\n"
     for i in range(1, len(nodes_per_layer) - 1):
       self.string += "  layer " + str(i+1) +": " + str(nodes_per_layer[i])\
-                     + " nodes;  activation: " + str(activations[i]) + "\n"
+                     + " nodes;  activation: " + str(activations[i-1]) + "\n"
     self.string += "  layer " + str(len(nodes_per_layer)) + ": " + str(nodes_per_layer[-1])\
                    + " output node(s); " + " activation: " + str(activations[-1])\
                    + ";  loss function: " + str(loss) + ".\n"
@@ -299,6 +305,7 @@ class Net:
           node.feedforward(activation = self.activations[-1])
 
   def zeroGrads(self):
+
     if debugging: print("setting gradients to zero")
     for layer in self.hiddenLayers:
       for node in layer:
@@ -307,12 +314,13 @@ class Net:
       node.zeroGradient()
 
   def backprop(self, learning_rate):
+
+    for node in self.outputNodes:
+      partials = node.adjustWeights(learning_rate, self.batchsize)
     for layer in range(len(self.hiddenLayers)):
       for node in self.hiddenLayers[-layer]:
         if debugging: print("updating weights for hidden layer", layer)
         node.adjustWeights(learning_rate, self.batchsize)
-    for node in self.outputNodes:
-      node.adjustWeights(learning_rate, self.batchsize)
 
   def getTotalError(self, inputs, outputs):
     """
@@ -331,17 +339,22 @@ class Net:
     return total_error / len(inputs)
 
   def getWeights(self):
+    """ Return the weights if this is a linear neural net. """
+
     assert len(self.nodes_per_layer) == 2,\
      "Method getWeights not implemented for networks with hidden layers. You probably don't"+\
      " really need the weights for those networks."
+
     return self.outputNodes[0].getWeights()
 
   def getOutput(self):
+
     return self.outputNodes[0].getState()
 
   def __str__(self):
+
     return self.string
-           
+
 
 #########################  Utilility functions ####################################
 
@@ -427,7 +440,7 @@ if __name__ == '__main__':
     return 1.0-SS_E/SS_T
 
   print('\n1-SSE/SST =', compute_r_squared(xs, ys, net))
- 
+
   weights = net.getWeights()
   weights = un_map_weights(weights,xmeans, xstdevs, ymeans, ystdevs)
 
