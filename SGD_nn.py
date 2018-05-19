@@ -33,6 +33,7 @@ class activate:
   funcs = {
     'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
     'ReLU': lambda x: max(0, x),
+    'tanh': lambda x: activate.funcs('sigmoid')(2*x) - activate.funcs('sigmoid')(-2*x),
     'id': lambda x: x,
     None: lambda x: x,
   }
@@ -50,6 +51,7 @@ class activate:
   ders = {
     'sigmoid': lambda y: y * (1 - y),   
     'ReLU': lambda y: 0 if y == 0 else 1, 
+    'tanh': lambda y: 1 - y**2,
     'id': lambda y: 1,
     None: lambda y: 1,
   }
