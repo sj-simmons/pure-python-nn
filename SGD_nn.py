@@ -109,10 +109,12 @@ class Node:
   A Node in a neural network.
 
   Attributes:
-    inputs (list) : A list of instances of InputLists representing all the Nodes in the neural
-                    net that 'feed into' this node.
-    state (number): Note: for an output node this is the state BEFORE the loss function is
-                    applied.
+    inputs (list)   : A list of instances of InputLists representing all the Nodes in the neural
+                      net that 'feed into' this node.
+    state (number)  : Note: for an output node this is the state BEFORE the loss function is
+                      applied.
+    d_state (number): The partial of the output -- after applying this node's activation -- of this node 
+                      with respect to an incoming InputLists' weight.
   """
 
   def __init__(self, nodeList):
@@ -157,17 +159,17 @@ class Node:
     for inputLink in self.inputs:
       sum_ += inputLink.weight * inputLink.inputNode.state
 
-    y = activation.f(sum_)
-    self.setState(y)
+    yhat = activation.f(sum_) # yhat output of the net as opossed to the target output value y
+    self.setState(yhat)
 
     # If loss != None then self is an output node and output is a number so we add the
     # contribution of the to the partials feeding into this node.
     if loss != None:
       for inputLink in self.inputs:
-        inputLink.addToPartial(loss.df(y, output) * activation.df(y) * inputLink.inputNode.state)
+        inputLink.addToPartial(loss.df(yhat, output) * activation.df(y) * inputLink.inputNode.state)
     else: # this is a hidden layer
       for inputLink in self.inputs:
-        inputLink.addToPartial(activation.df(y) * inputLink.inputNode.state)
+        inputLink.addToPartial(activation.df(yhat) * inputLink.inputNode.state)
 
   def adjustWeights(self, learning_rate, batchsize):
 
@@ -208,6 +210,7 @@ class Net:
       batchsize (int)       : The number of examples in a batch.
       loss (string)         : A string specifying the loss function to use when gauging
                               accuracy of the output of model.
+      print_string (string) : The string to display when calling print on the model.
     """
     self.nodes_per_layer = nodes_per_layer
     self.inputNodes = []
@@ -215,7 +218,7 @@ class Net:
     self.outputNodes = []
     self.activations = []
     self.batchsize = batchsize
-    self.string = '\nThe model:\n'
+    self.print_string = '\nThe model:\n'
 
     assert nodes_per_layer[-1] == 1, "At most one output for now."
     assert loss in set_loss.losses.keys() ,\
@@ -227,11 +230,11 @@ class Net:
                        "No such activation: must be one of " + str(activate.funcs.keys())
 
     # build a string representing the model
-    self.string += "  layer 1: " + str(nodes_per_layer[0]) + " input(s)\n"
+    self.print_string += "  layer 1: " + str(nodes_per_layer[0]) + " input(s)\n"
     for i in range(1, len(nodes_per_layer) - 1):
-      self.string += "  layer " + str(i+1) +": " + str(nodes_per_layer[i])\
+      self.print_string += "  layer " + str(i+1) +": " + str(nodes_per_layer[i])\
                      + " nodes;  activation: " + str(activations[i-1]) + "\n"
-    self.string += "  layer " + str(len(nodes_per_layer)) + ": " + str(nodes_per_layer[-1])\
+    self.print_string += "  layer " + str(len(nodes_per_layer)) + ": " + str(nodes_per_layer[-1])\
                    + " output node(s); " + " activation: " + str(activations[-1])\
                    + ";  loss function: " + str(loss) + ".\n"
 
@@ -353,7 +356,7 @@ class Net:
 
   def __str__(self):
 
-    return self.string
+    return self.print_string
 
 
 #########################  Utilility functions ####################################
