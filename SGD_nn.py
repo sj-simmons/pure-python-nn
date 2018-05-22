@@ -139,8 +139,8 @@ class Node:
 
   def feedforward(self, activation, with_grad = False, loss = None, output = None):
     """
-    Feedforward for all the inputs to this instance of Node, applying the activation function
-    if present.  If with_grad, then accumulate this node's gradient.
+    Feedforward for all the inputs to this instance of Node, applying the activation function.
+    If with_grad, then accumulate this node's gradient.
 
     Attributes:
       activation (function): An activation function.
@@ -289,8 +289,8 @@ class Net:
         "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
                                                                 " got " + str(len(inputs[0])) + "."
 
-    for i in range(len(inputs)):
-      for j in range(len(inputs[i])): # feed in the inputs
+    for i in range(len(inputs)): # for each example
+      for j in range(len(inputs[i])): # feed in the inputs of that example
         self.inputNodes[j].setState(inputs[i][j])
       for layer in range(len(self.hiddenLayers)):  # feed forward through any hidden layers
         for node in self.hiddenLayers[layer]:
@@ -298,7 +298,7 @@ class Net:
             node.feedforward(activation = self.activations[layer], with_grad = True, output = None)
           else:
             node.feedforward(activation = self.activations[layer], with_grad = False, output = None)
-      for node in self.outputNodes: # feed forward through outputs
+      for node in self.outputNodes: # feed forward through output node(s)
         if with_grad:
           node.feedforward(activation = self.activations[-1], with_grad = True, loss = self.loss, output = outputs[i][0])
         else:
