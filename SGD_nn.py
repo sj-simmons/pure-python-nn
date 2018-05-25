@@ -1,34 +1,35 @@
-# SGD_nn.py                                                                  Simmons  Spring 18
+# SGD_nn.py                                                   Simmons  Spring 18
 #
-# This implements a feed-forward, fully-connected neural net in pure Python that trains using
-# SGD (stochastic gradient descent).
+# This implements a feed-forward, fully-connected neural net in pure Python that
+# trains using SGD (stochastic gradient descent).
 
 import math, random
 from functools import reduce
+from operator import add, ,mul, and_
 
 debugging = False
+debug_inst = False # Print debugging info during instantiation of a Net.
 
-####################  Some activations and their derivatives  #####################
 
-class activate:
+##################  Some activations and their derivatives  ####################
+
+class _Activate(object):
   """
   An activation function class.
 
-  >>> activations = map(lambda s: activate(s), [None, 'id', 'ReLU', 'sigmoid'])
+  >>> activations = map(lambda s: _Activate(s), [None, 'id', 'ReLU', 'sigmoid'])
   >>> [function.f(-7) for function in activations] # doctest:+ELLIPSIS
   [-7, -7, 0, 0.000911...
-  >>> # The code above works but activations is a map object that is lazy evaluated;
-  >>> # so we cannot for example get our hands on the first activation,
-  >>> # so that   list(activations)[0]  thows an exception.
-  >>> #
+  >>> # The code above works but activations is a map object that is lazy evalu
+  >>> # -ated; so we cannot for example get our hands on the first activation,
+  >>> # and, for example  list(activations)[0]  thows an exception.
   >>> # For our application below, do this instead:
-  >>> activations = [activate(s) for s in [None, 'id', 'ReLU', 'sigmoid']]
+  >>> activations = [_Activate(s) for s in [None, 'id', 'ReLU', 'sigmoid']]
   >>> activations[0] # doctest:+ELLIPSIS
-  <__main__.activate objec...
+  <__main__._Activate objec...
   >>> activations[2].f(-3)
   0
   """
-
   # Some activation functions, f(x):
   funcs = {
     'sigmoid': lambda x: 1 / (1 + math.exp(-x)),
@@ -39,14 +40,15 @@ class activate:
 
   # Their derivatives, f'(y):
   #
-  # Note: It's efficient to compute the derivative of the sigmoid when it's expressed as a
-  # function of y = sigmoid(x).  To make our code in the neural net classes nicer, we write
-  # all the derivatives below as function of the output of the corresponding activation
-  # function.  So if f(x) is the activation function in question, the derivative below is
-  # actually (d/dx)(f(x)) written as a function of y = f(x).  This is what we denote by f'(y).
-  #
-  # Now suppose that we want to take the derivative of g(f(x)) with respect to x.  Using
-  # the chain rule we get:  (d/dy)(g(y)) * (d/dx)(f(x)) = g'(y) * f'(y).
+  # Note: It's efficient to compute the derivative of the sigmoid when it's ex-
+  # pressed as a function of y = sigmoid(x).  To make our code in the neural net
+  # classes nicer, we write all the derivatives below as function of the output
+  # of the corresponding activation function.  So if f(x) is the activation
+  # function in question, the derivative below is actually (d/dx)(f(x)) but
+  # written as a function of y = f(x).  This is what we denote by f'(y).
+  # Now suppose that we want to take the derivative of g(f(x)) with respect to
+  # x.  Using the chain rule we get: (d/dy)(g(y)) * (d/dx)(f(x)) = g'(y)*f'(y)
+  # where y = f(x).
   ders = {
     'sigmoid': lambda y: y * (1 - y),
     'ReLU': lambda y: 0 if y == 0 else 1,
@@ -55,257 +57,306 @@ class activate:
   }
 
   def __init__(self, activation):
-
     self.f = self.funcs.get(activation, '')
     self.df = self.ders.get(activation, '')
 
-####################  Loss functions and their derivatives  #####################
 
-class set_loss:
+###################  Loss functions and their derivatives  #####################
 
-  # Some loss functions J(y, output) (for one example):
-  #
-  # We write these as functions of y, which is consistent with the discussion above where g(y)
-  # is replaced with J(y, output).
+class _SetLoss(object):
+  """
+  Sets a loss function L(y_hat) = L(y_hat, y) to be used with (mini-)batches of
+  examples. Also provides L'(y_hat).
+
+  We write L and L' as functions of the outputs y_hat, which is consistent with the discussion
+  in the docstring of _Activate in that we write the derivative of l(y_hat, y) 
+  with respect to y_hat as a function of .
+
+  Args:
+    y_hat (Number): The nets predicted target based on a features x.
+    y (Number): The actual target of the example with feature x.
+  """
   losses = {
-    'MSE': lambda y, output: (y - output)**2,
+    'MSE': lambda y_hat, y: (y - y_hat)**2,
   }
 
   # their derivative dJ(y)/dy up to a constant
   ders = {
-    'MSE': lambda y, output: y - output
+    'MSE': lambda y_hat, y: y - y_hat
   }
 
   def __init__(self, loss):
-
     self.f = self.losses.get(loss, '')
     self.df = self.ders.get(loss, '')
 
-####################  The neural net  #####################
 
-class InputLink:
+#############################  The neural net  #################################
 
-  def __init__ (self, node, wt):
+class _InputLink(object):
+  """
+  A connection from one node to another.
 
-    self.inputNode = node  # node is an instance of Node
-    self.weight = wt  # wt is a number
-    self.partial = 0
+  Args:
+    node (:obj:`Node`): The node that this inputLink is to emantate from.
+    weight: (:obj: `Number`): This links initial weight.
 
-  def zeroPartial(self):
+  Attributes:
+    inputNode (:obj:`Node`): The node that this inputLink emantates from.
+    weight: (:obj:`Number`): This links weight.
+  """
+  def __init__ (self, node, weight):
+    if debug_inst: print("     inputLink created")
+    self.inputNode = node
+    self.weight = weight
 
-    self.partial = 0
 
-  def addToPartial(self, x):
-
-    self.partial += x
-
-  def adjustWeight(self, learning_rate):
-
-    self.weight = self.weight - learning_rate * self.partial
-    if debugging: print("adjusting weight, partial =", self.partial)
-
-class Node:
+class Node(object):
   """
   A Node in a neural network.
 
+  Args:
+    node_list (:obj:`list` of :class:`_InputLink`): The inputLinks that will
+      feed into this node.
+
   Attributes:
-    inputs (list)   : A list of instances of InputLists representing all the Nodes in the neural
-                      net that 'feed into' this node.
-    state (number)  : Note: for an output node this is the state BEFORE the loss function is
-                      applied.
-    d_state (number): The partial of the output -- after applying this node's activation -- of this node 
-                      with respect to an incoming InputLists' weight.
+    links (:obj:`list` of :class:`_InputLink`): The nodes that inputLink into
+      this node.
+    state (:obj:`number`): The state of the node which, after a forward pass
+      through the entire network, includes application of this node's layer's
+      activation function.
+      Note: For an output node this is the state before the loss function is
+      applied but after any activation is applied.  In other words, for an
+      output node, state holds, after a forward pass, this node's y_hat, the
+      value predicted by the net that approximates the target y for the given
+      example.
   """
-
   def __init__(self, nodeList):
-
-    self.inputs = []
+    self.links = []
     self.state = 0
-    if debugging: print("  node created")
+    if debug_inst: print("  node created")
     for node in nodeList:
-      self.inputs.append(InputLink(node, 2 * random.random() - 1.0))
+      self.inputs.append(_InputLink(node, 2 * random.random() - 1.0))
 
-  def setState(self, value):
-
-    self.state = value
-
-  def getState(self):
-
-    return self.state
-
-  def zeroGradient(self):
-
-    if debugging: print("zeroing partials")
-    for inputLink in self.inputs:
-      inputLink.zeroPartial()
-
-  def feedforward(self, activation, with_grad = False, loss = None, output = None):
+  def forward(self):
     """
-    Feedforward for all the inputs to this instance of Node, applying the activation function.
-    If with_grad, then accumulate this node's gradient.
+    Feedforward for all the states of the nodes that inputLink into this node.
+    """
+    self.state = reduce(add, map(lambda node: link.state*link.weight, self.links))
+
+  def adjust_weights(self, scaled_grad):
+    """
+    Adjust the weights of the inputLinks incoming to this node.
+
+    Args:
+      scaled_grad (list of Numbers): the relavant gradient pre-negated and pre-
+        scaled by the learning rate.
+    """
+    if debugging: print("adjusting weights")
+    map(lambda link, val: link.weight += val, zip(self.inputs, scaled_grad))
+
+
+class Layer(object):
+
+  def __init__(self, num_nodes, input_layer, activation = None):
+    """
+    A layer in an instance of the Net class.
+
+    Args:
+      num_nodes (int): The number of nodes to create in this layer.
+      input_layer (:obj:`Layer`, optional): A layer or None.
+      activation (str, optional): A string determining this layer's activation
+        function.
 
     Attributes:
-      activation (function): An activation function.
-      with_grad (boolean)  : Accumulate this node's gradient if True.
-      loss (function)      : A function that is (single summand of a) of a loss function.
-      output (number)      : If accumulating the gradient, we need an example output.
+      nodes (:obj:`list` of :obj:`Node`): The input layer for this layer.
+      activation (:class:`_Activate`, optional) : This layer's activation
+        function or None if this is the input layer..
+      partials (:obj:`list` of :obj:`Number`, optional) : A list for holding the
+        partial derivatives needed to update the inputsLinks to the nodes of
+        the layer or None if this is the input layer.
     """
-    assert output == None or with_grad, "If accumulating gradient, an output must be passed."
-    assert loss == None or output != None, "Output node has no example output to compare to: "\
-                                     + "loss is " + str(loss) + " but output is " + str(output)
+    self.nodes = []
+    self.activation = None
+    self.partials = None
+    if input_layer == None:  # Then this is the input layer
+      for i in xrange(num_nodes):  # so add nodes
+        self.nodes.append(Node())  # that don't have any inputLinks.
+    else:  # This is not the input layer
+      self.partials = [0] * num_nodes  # so we will need partials
+      self.activation = _Activate(activation) # and an activation.
+      for i in xrange(num_nodes):  # Start adding nodes to this layer
+        for node in input_layer.nodes:  # and to each new node, connect every
+          self.nodes.append(Node(node)) # node of the input_layer.
 
-    # feedforward from all the inputs to this node
-    sum_ = 0
-    for inputLink in self.inputs:
-      sum_ += inputLink.weight * inputLink.inputNode.state
-
-    yhat = activation.f(sum_) # yhat output of the net as opossed to the target output value y
-    self.setState(yhat)
-
-    # If loss != None then self is an output node and output is a number so we add the
-    # contribution of the to the partials feeding into this node.
-    if loss != None:
-      for inputLink in self.inputs:
-        inputLink.addToPartial(loss.df(yhat, output) * activation.df(y) * inputLink.inputNode.state)
-    else: # this is a hidden layer
-      for inputLink in self.inputs:
-        inputLink.addToPartial(activation.df(yhat) * inputLink.inputNode.state)
-
-  def adjustWeights(self, learning_rate, batchsize):
-
-    if debugging: print("adjusting weights")
-    for inputLink in self.inputs:
-      inputLink.adjustWeight(learning_rate / batchsize)
-
-  def getWeights(self):
-
-    weights = []
-    for node in self.inputs:
-      weights.append(node.weight)
-    return weights
-
-  def getTotalError(self):
-
-    sum_squared_error = 0
-    for inputLink in self.inputs:
-      sum_squared_error += (self.state - inputLink.inputNode.state)**2 / len(self.inputs)
-    return sum_squared_error
-
-class Net:
-
-  def __init__(self, nodes_per_layer, activations = [], batchsize = 1, loss = 'MSE'):
+  def forward(xs = None):
     """
-    A neural network class.
+    Forward the states of the nodes in the previous layer through this layer,
+    updating the state of each node in this layer.
 
-    One recovers stochastic gradient descent using batchsize = 1; and gradient descent by
-    setting batchsize equal to the number of examples in the training data.
-
-    Currently supported activations: 'None'(same as 'id'), 'ReLU', and 'sigmoid',
-    Currently supported loss functins: 'MSE', 'sigmoid-MSE' (MSE stands for mean squared error)
-
-    Attributes
-      nodes_per_layer (list):
-      activations (List)    : A list of strings one for each hidden layer followed by one
-                              for the output layer.
-      batchsize (int)       : The number of examples in a batch.
-      loss (string)         : A string specifying the loss function to use when gauging
-                              accuracy of the output of model.
-      print_string (string) : The string to display when calling print on the model.
+    Args:
+      xs (:obj:`list` of :obj:`list` of :obj:`Number`): The batch's features.
+   #   ys (:obj:`list` of :obj:`list` of :obj:`Number`): The batch's correspond-
+   #     ing targets.
     """
-    self.nodes_per_layer = nodes_per_layer
-    self.inputNodes = []
-    self.hiddenLayers = [[]]
-    self.outputNodes = []
-    self.activations = []
+    if xs == None:    # Then this is not the input layer
+      for node in self.nodes: # so feed
+        node.forward()        # forward
+        nod.state = self.activation.f(node.state) # and apply the activation.
+    else:    # This is an input layer so just plug in the inputs.
+      map(lambda node, x: node.state = x, zip(self.nodes, xs))
+
+  def backprop():
+    gradient = map(
+
+    for node in self.nodes:
+      node.adjust_weights(  )
+
+
+
+class Net(object):
+
+  def __init__(self, nodes_per_layer, activations = [],\
+                                                   batchsize = 1, loss = 'MSE'):
+    """
+    A fully-connected, feed-forward, neural network class.
+
+    One recovers stochastic gradient descent using batchsize = 1; and gradient
+    descent by setting batchsize equal to the number of examples in the training
+    data.
+
+    Currently supported activations:
+      'None'(same as 'id'), 'ReLU', 'sigmoid', and 'tanh'.
+
+    Currently supported loss functins:
+      'MSE', 'sigmoid-MSE' (MSE stands for mean squared error).
+
+    Args:
+      nodes_per_layer (list of int) : A list of integers determining the number
+        of nodes in each layer.
+      activations (:obj:`lst): A list of strings one for each hidden layer fol-
+        lowed by one for the output layer determining that layer's activation
+        function..
+      batchsize (int): The number of examples in a batch that net will process
+        during a training loop.
+      loss (string): A string specifying the loss function to use when gauging
+        accuracy of the output of model.
+
+    Attributes:
+      layers (list of :obj:`Layer`): A list of the nets layers starting with
+        the input layer, proceeding through the hidden layers. and ending with
+        the output layer.
+      string (str): The string to display when calling print on the model.
+      batchsize (int): The number of examples in a batch that net processes
+        during a training loop.
+      loss (str): A string specifying the loss function to use when gauging the
+        accuracy of the output of model.
+    """
+    self.layers = []
     self.batchsize = batchsize
-    self.print_string = '\nThe model:\n'
+    self.string = '\nThe model:\n'
+    self.loss = _SetLoss(loss)
 
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-    assert loss in set_loss.losses.keys() ,\
-           "Invalid loss fn: must be one of " + str(set_loss.losses.keys())
+    assert loss in _SetLoss.losses.keys() ,\
+           "Invalid loss fn: must be one of " + str(_SetLoss.losses.keys())
     assert len(activations) == len(nodes_per_layer) - 1,\
-           "Length of activations list should be " + str(len(nodes_per_layer) - 1) +\
-           "not" + str(len(activations))+"."
-    assert reduce(lambda x,y: x and y, map(lambda s: s in activate.funcs.keys(), activations)),\
-                       "No such activation: must be one of " + str(activate.funcs.keys())
+           "Length of activations list should be " +str(len(nodes_per_layer)-1)\
+            + "not" + str(len(activations))+"."
+    assert reduce(and_,\
+             map(lambda s: s in _Activate.funcs.keys(), activations)),\
+             "No such activation: must be one of " + str(_Activate.funcs.keys())
+
+    if debug_inst:
+      print("creating an input layer with", nodes_per_layer[0], "nodes.")
+    self.layers.append(nodes_per_layer[0]))
+
+    for i in range(1,len(self.nodes_per_layer)-2):
+      if debug_inst: print("creating a hidden layer", layer,"with",\
+                    nodes_per_layer[i], "node(s).")
+      self.layers.append(\
+                    Layer(num_per_layer[i], self.layers[i-1], activations[i-1]))
+
+    if debug_inst:
+      print("creating output layer with", self.nodes_per_layer[-1], "node(s).")
+    self.layers.append(\
+                    Layer(num_per_layer[-1], self.layers[-1], activations[-1]))
 
     # build a string representing the model
-    self.print_string += "  layer 1: " + str(nodes_per_layer[0]) + " input(s)\n"
+    self.string += "  layer 1: " + str(nodes_per_layer[0]) + " input(s)\n"
     for i in range(1, len(nodes_per_layer) - 1):
-      self.print_string += "  layer " + str(i+1) +": " + str(nodes_per_layer[i])\
+      self.string += "  layer " + str(i+1) +": " + str(nodes_per_layer[i])\
                      + " nodes;  activation: " + str(activations[i-1]) + "\n"
-    self.print_string += "  layer " + str(len(nodes_per_layer)) + ": " + str(nodes_per_layer[-1])\
-                   + " output node(s); " + " activation: " + str(activations[-1])\
-                   + ";  loss function: " + str(loss) + ".\n"
+    self.string += "  layer " + str(len(nodes_per_layer)) + ": " +\
+                     str(nodes_per_layer[-1]) + " output node(s); " +\
+                     " activation: " + str(activations[-1]) +\
+                     ";  loss function: " + str(loss) + ".\n"
 
-    self.loss = set_loss(loss)
-    self.activations = [activate(s) for s in activations]
+  def forward(self, xss, yss = None, with_grad = False):
+    """
+    Feed forward the xss, the features of a batch of examples. If this is called
+    as part as the forward pass preceding a backpropation, then xss's correpond-
+    ing targets should be passed as yss, and with_grad should be True.
 
-    # Populate the input nodes:
-    if debugging: print("populating input layer with", self.nodes_per_layer[0], "node(s).")
-    for node in range(self.nodes_per_layer[0]):
-      self.inputNodes.append(Node([]))
+    Args:
+      xss (:obj:`list` of :obj:`list` of :obj:`Number`): A list of lists each of
+        which is a feature from the batch being forwarded.
+      yss (:obj:`list` of :obj:`list` of :obj:`Number`): The corresponding
+        targets.
+      with_grad (bool): If True, updates the gradients while feeding forward.
 
-    # Populate the hidden layers:
-    for layer in range(1,len(self.nodes_per_layer)-2):
-      if debugging:\
-        print("populating hidden layer",layer,"with", self.nodes_per_layer[layer], "node(s).")
-      for node in range(self.nodes_per_layer[layer]):
-        self.hiddenLayers[layer - 1].append(Node(self.inputNodes))
+    Returns:
+      curr_loss (Number): The current loss assoiciated to the mini-batch with
+        freatures xss and targets yss.
+    """
+    assert len(inputs[0]) == len(self.layers[0]),\
+        "Numer of dimensions in a feature is incorrect. Should be " +\
+        str(len(self.layers[0])) + " got " + str(len(inputs[0])) + "."
 
-    # Populate the output layer:
-    if debugging: print("populating output layer with", self.nodes_per_layer[1], "node(s).")
-    for node in range(self.nodes_per_layer[-1]):
-      if len(self.nodes_per_layer) < 3:  # if no hidden layers
-        self.outputNodes.append(Node(self.inputNodes))
-      else:
-        self.outputNodes.append(Node(self.hiddenLayers[-1]))
+    if yss != None:  # Then we will compute the current loss of the mini-batch
+      curr_loss = 0
 
-  def learn(self, inputs, outputs, learning_rate = .1):
+    # feed each example xs in the mini-batch xss through the network and
+    # accumulate this mini-batches current loss.
+    for i in xrange(len(xss)):
+      self.layers[0].forward(xss[i])  # feed into the input layer
+      for layer in xrange(1,len(self.layers)):
+        self.layers[layer].forward()   # forward through the rest of the layers
+      if 'curr_loss' in locals():
+        curr_loss += reduce(\
+                       map(self.loss,\
+                         zip(\
+                           [node.state for node in self.layer[-1].nodes], yss[i]\
+                         )))
+    return curr_loss
+
+  def backprop(self, learning_rate):
+    self.layers[-1].backprop()
+
+
+    for node in self.outputNodes:
+      partials = node.adjustWeights(learning_rate, self.batchsize)
+    for layer in range(len(self.hiddenLayers)):
+      for node in self.hiddenLayers[-layer]:
+        if debugging: print("updating weights for hidden layer", layer)
+        node.adjustWeights(learning_rate, self.batchsize)
+
+  def learn(self, xxs, yys, learning_rate = .1):
     """
     Apply one step along mini-batch gradient descent.
 
     Args:
-      inputs (list): A list of lists holding the batch's inputs.
-      outputs (list): A list of lists holding the batch's corresponding outputs.
-      learning_rate (number): Scaling factor for the gradient during descent.
+      xss (:obj:`list` of :obj:`list` of :obj:`Number`): A list of lists each of
+        which is a feature from the batch being forwarded.
+      yss (:obj:`list` of :obj:`list` of :obj:`Number`): The corresponding
+        targets.
+      learning_rate (Number): Scaling factor for the gradient during descent.
     """
-
     assert(len(inputs) == self.batchsize),\
      "Number of inputs is " + str(len(inputs)) + " but batchsize is " + str(self.batchsize)
     assert(len(inputs) == len(outputs)), "Lengths of inputs and outputs should be the same."
 
-    self.forward(inputs, outputs, with_grad = True)
+    self.forward(xss, yss, with_grad = True)
     self.backprop(learning_rate)
-
-  def forward(self, inputs, outputs = None, with_grad = False):
-    """
-    Feed forward the given inputs.
-
-    Attributes:
-      inputs (list)   : A list of lists each list of which is one of this batch's examples.
-      outputs (list)  : A list of lists of the corresponding outputs.
-      with_grad (bool): If True, updates the gradients while feeding forward.
-    """
-
-    assert len(inputs[0]) == len(self.inputNodes),\
-        "Dimension of inputs is incorrect. Should be " + str(len(self.inputNodes)) + \
-                                                                " got " + str(len(inputs[0])) + "."
-
-    for i in range(len(inputs)): # for each example
-      for j in range(len(inputs[i])): # feed in the inputs of that example
-        self.inputNodes[j].setState(inputs[i][j])
-      for layer in range(len(self.hiddenLayers)):  # feed forward through any hidden layers
-        for node in self.hiddenLayers[layer]:
-          if with_grad:
-            node.feedforward(activation = self.activations[layer], with_grad = True, output = None)
-          else:
-            node.feedforward(activation = self.activations[layer], with_grad = False, output = None)
-      for node in self.outputNodes: # feed forward through output node(s)
-        if with_grad:
-          node.feedforward(activation = self.activations[-1], with_grad = True, loss = self.loss, output = outputs[i][0])
-        else:
-          node.feedforward(activation = self.activations[-1])
 
   def zeroGrads(self):
 
@@ -315,15 +366,6 @@ class Net:
         node.zeroGradient()
     for node in self.outputNodes:
       node.zeroGradient()
-
-  def backprop(self, learning_rate):
-
-    for node in self.outputNodes:
-      partials = node.adjustWeights(learning_rate, self.batchsize)
-    for layer in range(len(self.hiddenLayers)):
-      for node in self.hiddenLayers[-layer]:
-        if debugging: print("updating weights for hidden layer", layer)
-        node.adjustWeights(learning_rate, self.batchsize)
 
   def getTotalError(self, inputs, outputs):
     """
@@ -351,12 +393,10 @@ class Net:
     return self.outputNodes[0].getWeights()
 
   def getOutput(self):
-
     return self.outputNodes[0].getState()
 
   def __str__(self):
-
-    return self.print_string
+    return self.string
 
 
 #########################  Utilility functions ####################################
