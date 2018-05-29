@@ -278,8 +278,6 @@ class Net(object):
     activations (:obj:`lst): A list of strings one for each hidden layer fol-
       lowed by one for the output layer, each determining that layer's activ-
       ation function.
-    batchsize (int): The number of examples in a batch that net will process
-      during a training loop.
     loss (string): A string specifying the loss function to use when gauging
       accuracy of the output of model.
 
@@ -288,8 +286,6 @@ class Net(object):
       the input layer, proceeding through the hidden layers. and ending with
       the output layer.
     string (str): The string to display when calling print on the model.
-    batchsize (int): The number of examples in a batch that net processes
-      during a training loop.
     loss (str): A string specifying the loss function to use when gauging the
       accuracy of the output of model.
     dloss_dphi :
@@ -302,7 +298,6 @@ class Net(object):
       loss='MSE'
   ):
     self.layers = []
-    self.batchsize = batchsize
     self.loss = LOSS_FUNCTIONS[loss]
 
     assert nodes_per_layer[-1] == 1, "At most one output for now."
@@ -350,8 +345,8 @@ class Net(object):
     )
 
     # build a string representing the model
-    self.string = "batchsize is "+str(batchsize)+"\nThe model:\n"+\
-                  "  layer 1: "+str(nodes_per_layer[0])+" input(s)\n"
+    self.string = "\nThe model:\n  layer 1: "+str(nodes_per_layer[0])+\
+                  " input(s)\n"
     for i in range(1, len(nodes_per_layer) - 1):
       self.string += "  layer " + str(i+1)+": "+str(nodes_per_layer[i])+\
                      " nodes;  activation: "+str(activations[i-1])+"\n"
@@ -430,8 +425,6 @@ class Net(object):
         targets.
       learning_rate (Number): Scaling factor for the gradient during descent.
     """
-    assert(len(xss) == self.batchsize), "Number of inputs is "+str(len(xss))+\
-     " but batchsize is "+str(self.batchsize)
     assert(len(xss) == len(yss)), "Lengths of xss and yss should be the same."
 
     if DEBUG_TRAIN:
@@ -447,7 +440,7 @@ class Net(object):
 #######################  Utilility functions ##################################
 
 #pylint: disable=too-many-arguments,too-many-locals
-def train(net, xs_, ys_, batchsize, epochs, learning_rate, prtlns=30):
+def train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30):
   """
   A convenient function that implements a loop for training instances of Net.
   It spews out the last prtlns current losses without the cost of
@@ -456,19 +449,19 @@ def train(net, xs_, ys_, batchsize, epochs, learning_rate, prtlns=30):
   the mini-batch size.
   """
 
-  n_examples = len(xs_)
+  n_examples = len(xss)
   thresh = epochs*n_examples/batchsize-int(prtlns*batchsize/n_examples)-1
 
   for i in range(int(epochs * n_examples / batchsize)):
-    xys = list(zip(xs_, ys_))
-    random.shuffle(xys)
-    xs_, ys_ = zip(*xys)
+    xyss = list(zip(xss, yss))
+    random.shuffle(xyss)
+    xss, yss = zip(*xyss)
     total_ave_loss = 0
     for j in range(0, n_examples, batchsize):
-      xss = (xs_ + xs_[:batchsize])[j: j + batchsize]
-      yss = (ys_ + ys_[:batchsize])[j: j + batchsize]
+      xss_mb = (xss + xss[:batchsize])[j: j + batchsize]
+      yss_mb = (yss + yss[:batchsize])[j: j + batchsize]
       net.zero_grads()
-      loss = net.learn(xss, yss, learning_rate)
+      loss = net.learn(xss_mb, yss_mb, learning_rate)
       total_ave_loss = (total_ave_loss + loss)/2
       if i >= thresh and j > n_examples - batchsize * prtlns:
         print('current loss: {0:12.4f}'.format(total_ave_loss))
@@ -489,21 +482,21 @@ def main():
   num_examples = 20
 
   # generate some data
-  xs_ = []
-  ys_ = []
+  xss = []
+  yss = []
   stdev = 10
   for dummy_index in range(num_examples):
     x1_ = random.uniform(0, 40)
     x2_ = random.uniform(0, 60)
-    xs_.append([x1_, x2_])
-    ys_.append([2 * x1_ + 5 * x2_ + 7 + random.normalvariate(0, stdev)])
+    xss.append([x1_, x2_])
+    yss.append([2 * x1_ + 5 * x2_ + 7 + random.normalvariate(0, stdev)])
 
   # mean center and nomalize
-  from Pure_Python_Stats import mean_center, normalize, un_map_weights
-  xmeans, xs_ = mean_center(xs_)  # x_means is a list of the means of cols of
-  xstdevs, xs_ = normalize(xs_)   # the xs_; x_stdevs holds the stand devs of
-  ymeans, ys_ = mean_center(ys_)  # of the columns; similarly for ymeans and
-  ystdevs, ys_ = normalize(ys_)   # and ystdevs.
+  from pure_python_stats import mean_center, normalize, un_map_weights
+  xmeans, xss = mean_center(xss)  # x_means is a list of the means of cols of
+  xstdevs, xss = normalize(xss)   # the xss; x_stdevs holds the stand devs of
+  ymeans, yss = mean_center(yss)  # of the columns; similarly for ymeans and
+  ystdevs, yss = normalize(yss)   # and ystdevs.
 
   batchsize = 20
   net = Net([2, 1], activations=[None], batchsize=batchsize, loss='MSE')
@@ -512,11 +505,11 @@ def main():
   epochs = 100
   learning_rate = 0.1
 
-  net = train(net, xs_, ys_, batchsize, epochs, learning_rate, prtlns=30)
+  net = train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30)
 
   DEBUG_TRAIN = False
 
-  def compute_r_squared(net, xs_, ys_):
+  def compute_r_squared(net, xss, yss):
     """
     Return 1-SSE/SST which is the proportion of the variance in the data
     explained by the regression hyper-plane.
@@ -524,16 +517,16 @@ def main():
     ss_e = 0.0
     ss_t = 0.0
 
-    from Pure_Python_Stats import columnwise_means
-    ymean = columnwise_means(ys_)  # mean of the output variable
+    from pure_python_stats import columnwise_means
+    ymean = columnwise_means(yss)  # mean of the output variable
                                    # (which is zero if data is mean-centered)
-    for idx, y__ in enumerate(ys_):
-      y_hat = net.forward([xs_[idx]])
+    for idx, y__ in enumerate(yss):
+      y_hat = net.forward([xss[idx]])
       ss_e = ss_e + (y__[0] - y_hat[0][0])**2
       ss_t = ss_t + (y__[0] - ymean[0])**2
     return 1.0-ss_e/ss_t
 
-  print('1-SSE/SST =', compute_r_squared(net, xs_, ys_,))
+  print('1-SSE/SST =', compute_r_squared(net, xss, yss,))
 
   weights = [net.forward([[1, 0]])[0][0], net.forward([[0, 1]])[0][0]]
   weights = un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs)
