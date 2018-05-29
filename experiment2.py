@@ -23,12 +23,13 @@ def find_least_squares_reg_line(xs, ys, epochs, learning_rate):
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
-            net.zeroGrads()
+            #net.zeroGrads()
             net.learn([xs[i]], [ys[i]], learning_rate)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
     # line found by the neural net.
-    weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
+    #weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
+    weights = [net.forward([[1]])[0][0]]
 
     weights = un_map_weights(weights, x_means, x_stdevs, y_means, y_stdevs)
     return weights[0], weights[1]
@@ -44,7 +45,7 @@ for i in range(num_samples):
     xs, ys = generate_data(m = 2, b = 7, stdev = 20, num_examples = 20) # generate data
 
     # Find the least squares reg line using stochastic gradient descent.
-    b, m = find_least_squares_reg_line(xs, ys, epochs = 50, learning_rate = 0.1)
+    b, m = find_least_squares_reg_line(xs, ys, epochs = 1000, learning_rate = 0.01)
 
     slopes.append(m) # record slope
     intercepts.append(b) # record intercept

@@ -67,19 +67,20 @@ if __name__ == '__main__':
         else:
             print('current loss: {0:12f}'.format(loss))
 
-    epochs = 50
-    learning_rate = 0.1
+    epochs = 1000
+    learning_rate = 0.01
 
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
-            net.zeroGrads()
-            net.learn([xs[i]], [ys[i]], learning_rate)
-        printloss(net.getTotalError(xs, ys), j, epochs)
+            #net.zeroGrads()
+            loss = net.learn([xs[i]], [ys[i]], learning_rate)
+        printloss(loss, j, epochs)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
     # line found by the neural net.
-    weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
+    #weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
+    weights = [net.forward([[1]])[0][0]]
 
     # But since we mean_centered and normalized the data we have to scale and translate back to
     # where we started:
