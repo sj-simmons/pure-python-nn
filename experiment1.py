@@ -4,7 +4,7 @@
 # implementation to find the least squares regression line.
 
 import random
-from SGD_nn import Net
+from ffnn import Net
 from Pure_Python_Stats import mean_center, normalize, un_center, un_normalize, un_map_weights
 
 def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
@@ -73,13 +73,12 @@ if __name__ == '__main__':
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
-            #net.zeroGrads()
+            net.zero_grads()
             loss = net.learn([xs[i]], [ys[i]], learning_rate)
         printloss(loss, j, epochs)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
     # line found by the neural net.
-    #weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
     weights = [net.forward([[1]])[0][0]]
 
     # But since we mean_centered and normalized the data we have to scale and translate back to
