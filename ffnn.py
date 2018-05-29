@@ -1,7 +1,8 @@
-# SGD_nn.py                                                   Simmons  Spring 18
-#
-# This implements a feed-forward, fully-connected neural net in pure Python that
-# trains using SGD (stochastic gradient descent).
+# ffnn.py                                                     Simmons  Spring 18
+"""
+This implements a feed-forward, fully-connected neural net in pure Python that
+trains using stochastic gradient descent.
+"""
 
 import math
 import random
