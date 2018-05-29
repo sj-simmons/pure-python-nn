@@ -97,13 +97,13 @@ class _InputLink(object):
   A connection from one node to another.
 
   Args:
-    node (:obj:`Node`): The node that this inputLink is to emantate from.
+    node (:obj:`_Node`): The node that this inputLink is to emantate from.
     weight (:obj: `Number`): This links initial weight.
 
   Attributes:
-    input_node (:obj:`Node`): The node that this inputLink emantates from.
+    input_node (:obj:`_Node`): The node that this inputLink emantates from.
     weight: (:obj:`Number`): This links weight.
-    partial (:obj: `Number`): Holds the scaled partial w/r to this links
+    partial (:obj:`Number`): Holds the scaled partial w/r to this links
       weight.
   """
   def __init__(self, node, weight):
@@ -128,9 +128,9 @@ class _InputLink(object):
     self.partial = 0
 
 
-class Node(object):
+class _Node(object):
   """
-  A Node in a neural network.
+  A _Node in a neural network.
 
   Args:
     node_list (:obj:`list` of :class:`_InputLink`): The inputLinks that will
@@ -186,19 +186,19 @@ class Node(object):
       link.zero_partial()
 
 
-class Layer(object):
+class _Layer(object):
   """
   A layer in an instance of the Net class.
 
   Args:
     num_nodes (int): The number of nodes to create in this layer.
-    input_layer (:obj:`Layer`, optional): None or a layer whose nodes will
+    input_layer (:obj:`_Layer`, optional): None or a layer whose nodes will
       feed into this layer's nodes.
     activation (str, optional): A string determining this layer's activation
       function.
 
   Attributes:
-    nodes (:obj:`list` of :obj:`Node`): The nodes of this layer.
+    nodes (:obj:`list` of :obj:`_Node`): The nodes of this layer.
     activation (:class:`Activate`, optional) : This layer's activation
       function or None if this is the input layer..
     aux_der: An auxillary function used when building partials while feeding
@@ -217,13 +217,13 @@ class Layer(object):
     self.nodes = []
     if input_layer is None:       # Then this is the input layer so add
       for dummy_index in range(num_nodes):  #   nodes that have no inputLinks.
-        self.nodes.append(Node())
+        self.nodes.append(_Node())
     else:                                      # This is not the input layer so
       self.activation = activation             #   we need an activation, and an
       self.aux_der = aux_der                   #   and an auxillary function.
       for dummy_index in range(num_nodes):         # Add nodes to this layer and
         self.nodes.append(               #   to each new node, connect
-            Node(input_layer.nodes)      #   every node of the input
+            _Node(input_layer.nodes)      #   every node of the input
         )                                #   layer.
 
   def forward(self, xs_=None, ys_=None):
@@ -291,7 +291,7 @@ class Net(object):
       accuracy of the output of model.
 
   Attributes:
-    layers (list of :obj:`Layer`): A list of the nets layers starting with
+    layers (list of :obj:`_Layer`): A list of the nets layers starting with
       the input layer, proceeding through the hidden layers. and ending with
       the output layer.
     string (str): The string to display when calling print on the model.
@@ -323,7 +323,7 @@ class Net(object):
 
     if DEBUG_INST:
       print("creating an input layer with", nodes_per_layer[0], "node(s).")
-    self.layers.append(Layer(nodes_per_layer[0]))
+    self.layers.append(_Layer(nodes_per_layer[0]))
 
     for i in range(1, len(nodes_per_layer)-2):
       if DEBUG_INST:
@@ -333,7 +333,7 @@ class Net(object):
         )
       activation = Activate(activations[i-1])
       self.layers.append(
-          Layer(
+          _Layer(
               nodes_per_layer[i],
               self.layers[-1],
               activation.func,
@@ -348,7 +348,7 @@ class Net(object):
       )
     activation = Activate(activations[-1])
     self.layers.append(
-        Layer(
+        _Layer(
             nodes_per_layer[-1],
             self.layers[-1],
             activation,
