@@ -2,18 +2,48 @@
 """
 This implements a feed-forward, fully-connected neural net in pure Python that
 trains using stochastic gradient descent.
+
+
 """
 
 import math
 import random
 from functools import reduce
 from operator import add, and_
+from collections import namedtuple
 
 DEBUG_INST = False   # Print debugging info during instantiation of a Net.
 DEBUG_TRAIN = False  # Print debugging info during training.
 
 
 ##################  Some activations and their derivatives  ####################
+
+
+Activations = {
+    'sigmoid': namedtuple('sigmoid','func der')(lambda x: 1 / (1 + math.exp(-x)), lambda y: y * (1 - y)),
+    'ReLU': namedtuple('ReLU','func der')(lambda x: max(0, x), lambda y: 0 if y == 0 else 1),
+    'id': namedtuple('id','func der')(lambda x: x, lambda y: 1),
+    None: namedtuple('None_','func der')(lambda x: x, lambda y: 1)
+}
+
+#get_activation = {
+#    'sigmoid': {
+#        'func': lambda x: 1 / (1 + math.exp(-x)),
+#        'der': lambda y: y * (1 - y)
+#    },
+#    'ReLU': {
+#        'func': lambda x: max(0, x),
+#        'ReLU': lambda y: 0 if y == 0 else 1
+#    },
+#    'id': {
+#        'func': lambda x: x,
+#        'id': lambda y: 1,
+#    },
+#    None: {
+#        'func': lambda x: x,
+#        'id': lambda y: 1,
+#    }
+#}
 
 class Activate(object):
   """
@@ -64,6 +94,10 @@ class Activate(object):
 
 
 ###################  Loss functions and their derivatives  #####################
+
+LossFunctions = {
+    'MSE': namedtuple('MSE','func der')(lambda y_hat, y: (y_hat - y)**2, lambda y_hat, y: y_hat - y)
+}
 
 class SetLoss(object):
   """
@@ -311,16 +345,16 @@ class Net(object):
   ):
     self.layers = []
     self.batchsize = batchsize
-    self.loss = SetLoss(loss)
+    self.loss = LossFunctions[loss]
 
     assert nodes_per_layer[-1] == 1, "At most one output for now."
-    assert loss in SetLoss.losses.keys(),\
-           "Invalid loss fn: must be one of " + str(SetLoss.losses.keys())
+    assert loss in LossFunctions.keys(),\
+           "Invalid loss fn: must be one of " + str(LossFunctions.keys())
     assert len(activations) == len(nodes_per_layer) - 1,\
            "Length of activations list should be " +str(len(nodes_per_layer)-1)\
             + "not" + str(len(activations))+"."
-    assert reduce(and_, [s in Activate.funcs.keys() for s in activations]),\
-             "No such activation: must be one of " + str(Activate.funcs.keys())
+    assert reduce(and_, [s in Activations.keys() for s in activations]),\
+             "No such activation: must be one of " + str(Activations.keys())
 
     if DEBUG_INST:
       print("creating an input layer with", nodes_per_layer[0], "node(s).")
@@ -332,7 +366,7 @@ class Net(object):
             "creating a hidden layer", i, "with", nodes_per_layer[i],
             "node(s), and activation ", str(activations[i-1]), "."
         )
-      activation = Activate(activations[i-1])
+      activation = Activations[activations[i-1]]
       self.layers.append(
           _Layer(
               nodes_per_layer[i],
@@ -347,7 +381,7 @@ class Net(object):
           "creating output layer with", nodes_per_layer[-1], "node(s), " +\
           "activation " + str(activations[-1]) + ", and loss " + loss + "."
       )
-    activation = Activate(activations[-1])
+    activation = Activations[activations[-1]]
     self.layers.append(
         _Layer(
             nodes_per_layer[-1],
