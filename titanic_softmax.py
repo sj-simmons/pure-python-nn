@@ -15,7 +15,10 @@ with open('datasets/titanic_numeric_train.csv') as csvfile:
     for row in reader:
         xs.append([float(row[0])] + [float(row[i]) for i in range(2,len(row))])
         #xs.append([float(row[0])] + [float(row[i]) for i in range(2,7)]) # without boat, body
-        ys.append([float(row[1])])
+        if row[1] == 1:
+          ys.append([1,0])
+        else:
+          ys.append([0,1])
 
 xmeans, xs = mean_center(xs)
 xstdevs, xs = normalize(xs)
@@ -25,7 +28,7 @@ xstdevs, xs = normalize(xs)
 #xs = [[1]+x for x in xs]  # now 9 inputs
 
 batchsize = 10
-net = Net([len(xs[0]),1], activations = [None], loss = 'softmax')
+net = Net([len(xs[0]),2], activations = [None], loss = 'softmax')
 
 epochs = 20
 learning_rate = 0.1
@@ -50,7 +53,10 @@ with open('datasets/titanic_numeric_test.csv') as csvfile:
     for row in reader:
         xs.append([float(row[0])] + [float(row[i]) for i in range(2,len(row))])
         #xs.append([float(row[0])] + [float(row[i]) for i in range(2,7)])  # without boat, body
-        ys.append([float(row[1])])
+        if row[1] == 1:
+          ys.append([1,0])
+        else:
+          ys.append([0,1])
 
 #xs = [[1]+x for x in xs]  # now 9 inputs
 
