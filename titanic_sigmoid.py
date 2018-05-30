@@ -1,13 +1,12 @@
-# titanic_sigmoid_model.py                                                         Simmons 2018
+# titanic_sigmoid.py                                                Simmons 2018
 #
 # trains a linear model on Branton's version of Kaggle Titanic dataset
 #
 # this is just a linear model piped through sigmoid
 
 import csv
-from SGD_nn import Net
-from Pure_Python_Stats import mean_center, normalize, un_map_weights
-from random import shuffle
+from ffnn import Net, train
+from pure_python_stats import mean_center, normalize
 
 with open('datasets/titanic_numeric_train.csv') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
@@ -26,37 +25,20 @@ xstdevs, xs = normalize(xs)
 #xs = [[1]+x for x in xs]  # now 9 inputs
 
 batchsize = 10
-net = Net([len(xs[0]),1], activations = ['sigmoid'], batchsize = batchsize, loss = 'MSE')
-print(net)
+net = Net([len(xs[0]),1], activations = ['sigmoid'], loss = 'MSE')
 
 epochs = 20
 learning_rate = 0.1
 num_examples = len(xs)
-indices = list(range(num_examples))
-printlns = epochs*batchsize-int(30*batchsize/num_examples)-1
 
-# train
-for i in range(epochs * batchsize):
-    shuffle(indices); xs = [xs[idx] for idx in indices]; ys = [ys[idx] for idx in indices]
-    for j in range(0, num_examples, batchsize): # about num_example/batchsize passes
-        start = j % num_examples; end = start + batchsize
-        in_  = (xs+xs[:batchsize])[start: end]; out  = (ys+ys[:batchsize])[start: end]
-        net.zeroGrads()
-        net.learn(in_, out, learning_rate)
-        if i >= printlns and j > num_examples - batchsize * 30:
-          loss = net.getTotalError(xs, ys)
-          print('current loss: {0:12f}'.format(loss))
-    if i <= printlns:
-      loss = net.getTotalError(xs, ys)
-      print('current loss: {0:12f}'.format(loss), end='\b' * 26)
+net = train(net, xs, ys, batchsize, epochs, learning_rate, prtlns=30)
 
 # check accuracy on the training set
 num_passengers = len(xs)
 correct = 0
 for i in range(num_passengers):
-    net.forward([xs[i]])
-    output = net.getOutput()
-    if output > .5 and ys[i][0] == 1.0 or output <= .5 and ys[i][0] == 0.0:
+    y_hat = net.forward([xs[i]])[0][0]
+    if y_hat > .5 and ys[i][0] == 1.0 or y_hat <= .5 and ys[i][0] == 0.0:
         correct += 1
 print('percentage correct on training data:', correct/num_passengers)
 
@@ -76,8 +58,7 @@ with open('datasets/titanic_numeric_test.csv') as csvfile:
 num_passengers = len(xs)
 correct = 0
 for i in range(num_passengers):
-    net.forward([xs[i]])
-    output = net.getOutput()
-    if output > .5 and ys[i][0] == 1.0 or output <= .5 and ys[i][0] == 0.0:
+    y_hat = net.forward([xs[i]])[0][0]
+    if y_hat > .5 and ys[i][0] == 1.0 or y_hat <= .5 and ys[i][0] == 0.0:
         correct += 1
 print('percentage correct on test data:', correct/num_passengers)
