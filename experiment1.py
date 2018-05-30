@@ -5,7 +5,7 @@
 
 import random
 from ffnn import Net
-from Pure_Python_Stats import mean_center, normalize, un_center, un_normalize, un_map_weights
+from pure_python_stats import mean_center, normalize, un_center, un_normalize, un_map_weights
 
 def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
     """
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     # Create an instance of the neural net class with 1 input and 1 output, no hidden layer,
     # no activation function, mean squared error criterion.
-    net = Net([1,1], activations = [None], batchsize = 1, loss = 'MSE')
+    net = Net([1,1], activations = [None], loss = 'MSE')
     print(net)
 
     # An un-important helper function to sensibly print the current total error.

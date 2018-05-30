@@ -4,7 +4,7 @@
 # slopes and intercepts.
 
 from experiment1 import generate_data
-from Pure_Python_Stats import mean_center, normalize, un_map_weights
+from pure_python_stats import mean_center, normalize, un_map_weights
 from ffnn import Net
 from statistics import mean, stdev
 import matplotlib.pyplot as plt
