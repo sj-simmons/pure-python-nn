@@ -79,6 +79,10 @@ LOSS_FUNCTIONS = {
     'MSE': namedtuple('MSE', 'func der')(
         lambda y_hat, y: (y_hat - y)**2,
         lambda y_hat, y: y_hat - y
+    ),
+    'softmax': namedtuple('softmax', 'func der')(
+        lambda y_hat, y: (y_hat - y)**2,
+        lambda y_hat, y: y_hat - y
     )
 }
 
@@ -294,7 +298,6 @@ class Net(object):
       self,
       nodes_per_layer,
       activations,
-      batchsize=1,
       loss='MSE'
   ):
     self.layers = []
@@ -397,7 +400,6 @@ class Net(object):
     y_hats = self.forward(xss, yss, with_grad=True)
     curr_loss = 0
     for idx, ys_ in enumerate(yss):
-      #pylint: disable=bad-option-value
       curr_loss += reduce(add, map(self.loss.func, y_hats[idx], ys_))
     return curr_loss/len(xss)
 
@@ -499,7 +501,7 @@ def main():
   ystdevs, yss = normalize(yss)   # and ystdevs.
 
   batchsize = 20
-  net = Net([2, 1], activations=[None], batchsize=batchsize, loss='MSE')
+  net = Net([2, 1], activations=[None], loss='MSE')
   print(net)
 
   epochs = 100
