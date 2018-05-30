@@ -20,10 +20,10 @@ ymeans, ys = mean_center(ys)
 ystdevs, ys = normalize(ys)
 
 batchsize = 20
-net = Net([13,1], activations = [None], batchsize = batchsize, loss = 'MSE')
+net = Net([13,1], activations = [None], loss = 'MSE')
 print(net)
 
-epochs = 20 
+epochs = 20
 learning_rate = 0.02
 num_examples = len(xs)
 indices = list(range(num_examples))
