@@ -4,8 +4,8 @@
 # implementation to find the least squares regression line.
 
 import random
-from SGD_nn import Net
-from Pure_Python_Stats import mean_center, normalize, un_center, un_normalize, un_map_weights
+from ffnn import Net
+from pure_python_stats import mean_center, normalize, un_center, un_normalize, un_map_weights
 
 def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
     """
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     # Create an instance of the neural net class with 1 input and 1 output, no hidden layer,
     # no activation function, mean squared error criterion.
-    net = Net([1,1], activations = [None], batchsize = 1, loss = 'MSE')
+    net = Net([1,1], activations = [None], loss = 'MSE')
     print(net)
 
     # An un-important helper function to sensibly print the current total error.
@@ -67,19 +67,19 @@ if __name__ == '__main__':
         else:
             print('current loss: {0:12f}'.format(loss))
 
-    epochs = 50
-    learning_rate = 0.1
+    epochs = 1000
+    learning_rate = 0.01
 
     # Now train the neural net:
     for j in range(epochs):
         for i in range(len(xs)):
-            net.zeroGrads()
-            net.learn([xs[i]], [ys[i]], learning_rate)
-        printloss(net.getTotalError(xs, ys), j, epochs)
+            net.zero_grads()
+            loss = net.learn([xs[i]], [ys[i]], learning_rate)
+        printloss(loss, j, epochs)
 
     # The list weights below holds the intercept and slope, respectively, of the regression
     # line found by the neural net.
-    weights = net.getWeights() # weights[0] is the intercept; weights[1] is the slope
+    weights = [net.forward([[1]])[0][0]]
 
     # But since we mean_centered and normalized the data we have to scale and translate back to
     # where we started:

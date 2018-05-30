@@ -14,6 +14,7 @@
 #       if you are able to.
 
 from functools import reduce
+from operator import add, mul, truediv
 
 def ones(m,n):
     """
@@ -32,13 +33,13 @@ def addLists(lst1, lst2):
     [5, 7, 9]
     """
     assert len(lst1) == len(lst2), "The lists have to be the same length."
-    return list(map(lambda tuple_ : tuple_[0] + tuple_[1], zip(lst1, lst2)))
+    return list(map(add, lst1, lst2))
 
 def multiplyLists(lst1, lst2):
     """ Return the elementwise product of lst1 and lst2. """
 
     assert len(lst1) == len(lst2), "The lists have to be the same length."
-    return list(map(lambda tuple_ : tuple_[0] * tuple_[1], zip(lst1, lst2)))
+    return list(map(mul, lst1, lst2))
 
 def divideLists(lst1, lst2):
     """
@@ -54,7 +55,7 @@ def divideLists(lst1, lst2):
 
     assert len(lst1) == len(lst2), "The lists have to be the same length."
     assert reduce(lambda x,y: x*y, lst2) != 0, "Second list has entry equal to zero."
-    return list(map(lambda tuple_ : tuple_[0] / tuple_[1], zip(lst1, lst2)))
+    return list(map(truediv, lst1, lst2))
 
 def dotLists(lst1, lst2):
     """
@@ -64,11 +65,11 @@ def dotLists(lst1, lst2):
     32
     """
     assert len(lst1) == len(lst2), "The lengths of the lists should be the same."
-    return reduce(lambda x,y: x+y, [pair[0] * pair[1] for pair in zip(lst1, lst2)])
+    return reduce(add, multiplyLists(lst1, lst2))
 
 def scalarMultCols(lst, arrList):
     """
-    Return arrList with the first column scalar multiplied by the first element of lst, the 
+    Return arrList with the first column scalar multiplied by the first element of lst, the
     second column scalar multiplied by the second element of lst, and so on.
 
     >>> scalarMultCols([2], [[1], [2], [3]])
@@ -81,15 +82,15 @@ def scalarMultCols(lst, arrList):
     return list(map(lambda lst2: multiplyLists(lst, lst2), arrList))
 
 
-def add(arrList1, arrList2):
+def add_(arrList1, arrList2):
     """
     Return the element-wise sum of two mxn arrayLists.
 
-    >>> add([[1, 2, 3]], [[4, 5, 6]])
+    >>> add_([[1, 2, 3]], [[4, 5, 6]])
     [[5, 7, 9]]
-    >>> add([[1, 2, 3], [4, 5, 6]], [[6, 5, 4], [3, 2, 1]])
+    >>> add_([[1, 2, 3], [4, 5, 6]], [[6, 5, 4], [3, 2, 1]])
     [[7, 7, 7], [7, 7, 7]]
-    >>> add([[]], [[]])
+    >>> add_([[]], [[]])
     [[]]
     """
     assert len(arrList1[0]) == len(arrList1[0]) and len(arrList1) == len(arrList1),\
@@ -98,7 +99,7 @@ def add(arrList1, arrList2):
     if len(arrList1) == 1:
         return [[eltpair[0] + eltpair[1] for eltpair in zip(arrList1[0], arrList2[0])]]
     else:
-        return [add([rowpair[0]], [rowpair[1]])[0] for rowpair in zip(arrList1, arrList2)]
+        return [add_([rowpair[0]], [rowpair[1]])[0] for rowpair in zip(arrList1, arrList2)]
 
 
 def subtract(arrList1, arrList2):
@@ -112,7 +113,7 @@ def subtract(arrList1, arrList2):
     >>> subtract([[]], [[]])
     [[]]
     """
-    return add(arrList1, scalarMultCols([-1]*len(arrList2[0]), arrList2))
+    return add_(arrList1, scalarMultCols([-1]*len(arrList2[0]), arrList2))
 
 
 def multiply(arrList1, arrList2):
@@ -136,9 +137,9 @@ def multiply(arrList1, arrList2):
 
 
 def columnwise_means(arrList):
-    """ 
-    Return a list consisting of the means of the columns of arrayList. 
-   
+    """
+    Return a list consisting of the means of the columns of arrayList.
+
     >>> columnwise_means([[1, 2, 3], [4, 5, 6]])
     [2.5, 3.5, 4.5]
     """
@@ -183,7 +184,7 @@ def normalize(arrList):
     standard deviation is nonzero, and leave the column unmodified if it's standard deviation
     is zero.
 
-    Note: Columns 
+    Note: Columns
 
     Args:
         arrList (a list of lists of numbers)
@@ -191,7 +192,7 @@ def normalize(arrList):
     Returns:
         list, list: A pair consisting of a list each entry of which is the standard deviation
                     of the corresponding column of arrList, and an arrayList (a list of lists)
-                    each column of which is that column divided by the standard deviation of 
+                    each column of which is that column divided by the standard deviation of
                     the column that column if that standard deviation is nonzero.  Columns
                     with zero standard deviation are left unchanged.
 
@@ -219,7 +220,7 @@ def un_center(means, arrList):
     Returns:
         list: A list of list of numbers.
     """
-    return add(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
+    return add_(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
 
 def un_normalize(stdevs, arrList):
     """
