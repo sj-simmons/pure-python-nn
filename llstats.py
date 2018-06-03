@@ -1,17 +1,21 @@
-# Pure_Python_Stats.py                                                     Simmons  Spring 2018
+# llstats.py  (list of list stats)                          Simmons  Spring 2018
 #
-# This is a simple 'tensor-like' stats library in pure Python 3.  Most of the functions below
-# operate on m-by-n arrays but those have to be represents as lists of lists, and so are called
-# 'arrayLists';
+# This is a simple 'tensor-like' stats library in pure Python 3.  Many of the
+# functions below operate on m-by-n arrays but those have to be represented as
+# lists of lists, and so are called 'arrayLists';
 #
-#                                                                             +-       -+
-#                                                                             |  1    2 |
-# like, say, this: [[1,2],[3,-4],[-5,-6]], which represents the 3-by-2 array  |  3   -4 |.
-#                                                                             | -5   -6 |
-#                                                                             +-       -+
+# like, say, [[1,2],[3,-4],[-5,-6]], which represents the 3-by-2 array:
 #
-# Note: Instead of using this in practice, just install and use numpy for working with arrays
-#       if you are able to.
+#                                +-       -+
+#                                |  1    2 |
+#                                |  3   -4 |
+#                                | -5   -6 |
+#                                +-       -+
+#
+# Note: Instead of using this in real life, consider just installing and use
+#       numpy for working with arrays if you are able to; although this library
+#       is fine for prototyping (and thinking about how to work nicely with
+#       lists of lists).
 
 from functools import reduce
 from operator import add, mul, truediv
