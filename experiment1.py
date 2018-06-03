@@ -5,7 +5,7 @@
 
 import random
 from ffnn import Net
-from pure_python_stats import mean_center, normalize, un_center, un_normalize, un_map_weights
+from llstats import mean_center, normalize, un_center, un_normalize, un_map_weights
 
 def generate_data(m = 2, b = 7, stdev = 20, num_examples = 20):
     """
