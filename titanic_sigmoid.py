@@ -6,7 +6,7 @@
 
 import csv
 from ffnn import Net, train
-from pure_python_stats import mean_center, normalize
+from llstats import mean_center, normalize
 
 with open('datasets/titanic_numeric_train.csv') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
