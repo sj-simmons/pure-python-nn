@@ -58,18 +58,18 @@ def divideLists(lst1, lst2):
     """
 
     assert len(lst1) == len(lst2), "The lists have to be the same length."
-    assert reduce(lambda x,y: x*y, lst2) != 0, "Second list has entry equal to zero."
+    assert reduce(mul, lst2) != 0, "Second list has entry equal to zero."
     return list(map(truediv, lst1, lst2))
 
-def dotLists(lst1, lst2):
+def dot_lists(lst1, lst2):
     """
     Return the dot product of the vectors defined by lst1 and lst2.
 
-    >>> dotLists([1, 2, 3], [4, 5, 6])
+    >>> dot_lists([1, 2, 3], [4, 5, 6])
     32
     """
-    assert len(lst1) == len(lst2), "The lengths of the lists should be the same."
-    return reduce(add, multiplyLists(lst1, lst2))
+    assert len(lst1) == len(lst2), "The lengths of lists "+str(len(lst1))+" and "+str(len(lst2))+" should be the same."
+    return sum(multiplyLists(lst1, lst2))
 
 def scalarMultCols(lst, arrList):
     """
@@ -280,7 +280,7 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
            len(weights) == len(xmeans)
 
     slopes = un_normalize_slopes(weights, xstdevs, ystdevs)
-    intercept = ymeans[0] - dotLists(slopes, xmeans)
+    intercept = ymeans[0] - dot_lists(slopes, xmeans)
     return [intercept] + slopes
 
 
