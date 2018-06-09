@@ -1,12 +1,10 @@
-# titanic_sigmoid_model.py                                                         Simmons 2018
-#
-# trains a linear model on Branton's version of Kaggle Titanic dataset
-#
-# this is just a linear model piped through sigmoid
+# titanic_sigmoid_model.py                                      Simmons May 2018
 
 import csv
-from ffnn import Net, train
-from pure_python_stats import mean_center, normalize
+from nnff import Net
+from llstats import mean_center, normalize
+from operator import indexOf
+from nnutils import train
 
 with open('datasets/titanic_numeric_train.csv') as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
@@ -27,10 +25,10 @@ xstdevs, xs = normalize(xs)
 
 #xs = [[1]+x for x in xs]  # now 9 inputs
 
-batchsize = 10
-net = Net([len(xs[0]),2], activations = [None], loss = 'softmax')
+batchsize = 2
+net = Net([len(xs[0]),2], activations = ['softmax'], loss = 'MSE')
 
-epochs = 20
+epochs = 1
 learning_rate = 0.1
 num_examples = len(xs)
 
@@ -40,8 +38,8 @@ net = train(net, xs, ys, batchsize, epochs, learning_rate, prtlns=30)
 num_passengers = len(xs)
 correct = 0
 for i in range(num_passengers):
-    y_hat = net.forward([xs[i]])[0][0]
-    if y_hat > .5 and ys[i][0] == 1.0 or y_hat <= .5 and ys[i][0] == 0.0:
+    y_hat = net.forward([xs[i]])[0]
+    if indexOf(y_hat, max(y_hat)) == indexOf(y,max(y)):
         correct += 1
 print('percentage correct on training data:', correct/num_passengers)
 
@@ -64,7 +62,7 @@ with open('datasets/titanic_numeric_test.csv') as csvfile:
 num_passengers = len(xs)
 correct = 0
 for i in range(num_passengers):
-    y_hat = net.forward([xs[i]])[0][0]
-    if y_hat > .5 and ys[i][0] == 1.0 or y_hat <= .5 and ys[i][0] == 0.0:
+    y_hat = net.forward([xs[i]])[0]
+    if indexOf(y_hat, max(y_hat)) == indexOf(y,max(y)):
         correct += 1
 print('percentage correct on test data:', correct/num_passengers)
