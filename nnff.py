@@ -1,90 +1,17 @@
-# ffnn.py                                                     Simmons  Spring 18
+# nnff.py                                                     Simmons  Spring 18
 """
 This implements a feed-forward, fully-connected neural net in pure Python that
 trains using stochastic gradient descent.
 """
 
-import math
 import random
 from functools import reduce
-from operator import add, and_
-from collections import namedtuple
+from operator import and_, mul
+from nndicts import LOSS_FUNCTIONS, ACTIVATIONS
+from nnutils import train
 
-DEBUG_INST = False   # Print debugging info during instantiation of a Net.
+DEBUG_INST = True   # Print debugging info during instantiation of a Net.
 DEBUG_TRAIN = False  # Print debugging info during training.
-
-
-##################  Some activations and their derivatives  ####################
-
-# Sets an activation function f(x) and provides it's derivative as a function of
-# y=f(x).
-#
-# Note: It's efficient to compute the derivative of sigmoid when it's express-
-# ed as a function of y = sigmoid(x).  To make our code in the neural net
-# classes nicer, we write all the derivatives below as function of the output
-# of the corresponding activation function.  So if f(x) is the activation
-# function in question, the derivative below is actually (d/dx)(f(x)) but
-# written as a function of y = f(x).  This is what we denote by f'(y).
-# Now suppose that we want to take the derivative of g(f(x)) with respect to
-# x.  Using the chain rule we get: (d/dy)(g(y)) * (d/dx)(f(x)) = g'(y)*f'(y)
-# where y = f(x).
-
-ACTIVATIONS = {
-    'sigmoid': namedtuple('sigmoid', 'func der')(
-        lambda x: 1 / (1 + math.exp(-x)),
-        lambda y: y * (1 - y)
-    ),
-    'ReLU': namedtuple('ReLU', 'func der')(
-        lambda x: max(0, x),
-        lambda y: 0 if y == 0 else 1
-    ),
-    'id': namedtuple('id', 'func der')(lambda x: x, lambda y: 1),
-    None: namedtuple('None_', 'func der')(lambda x: x, lambda y: 1)
-}
-
-# Notes on using the ACTIVATIONS dictionary above:
-#
-# Consider these two commands:
-#
-# > activations = map(lambda s: ACTIVATIONS[s], [None, 'id', 'ReLU', 'sigmoid'])
-# > [acitivation.func(-7) for acitivation in activations] # doctest:+ELLIPSIS
-# [-7, -7, 0, 0.000911...
-#
-# The code above works but activations is a map object that is lazy evaluated,
-# so we cannot get our hands on, for instance, the first activation, so that,
-# for example,
-#
-# > list(activations)[0]
-#
-# thows an exception with a list_index_out_of_range error.
-#
-# For our application below, do can this instead:
-#
-# > activations = [ACTIVATIONS[str_] for str_ in ['id', 'ReLU', 'sigmoid']]
-# > activations[0]
-# id(func=<function <lambda>...
-# > activations[1].func(-3)
-# 0
-
-
-###################  Loss functions and their derivatives  #####################
-
-# Sets a loss function L(y_hat) = L(y_hat, y) to be used with (mini-)batches of
-# examples. Also provides L'(y_hat) = dL(y_hat)/dy_hat
-#
-# Note: For a minibatch, L is one summand of the Loss function applied to the
-# mini-batch.
-
-LOSS_FUNCTIONS = {
-    'MSE': namedtuple('MSE', 'func der')(
-        lambda y_hat, y: (y_hat - y)**2,
-        lambda y_hat, y: y_hat - y
-    ),
-    'softmax': namedtuple('softmax', 'func der')(
-        lambda y_hat, y: (y_hat - y)**2,
-        lambda y_hat, y: y_hat - y
-    )
-}
 
 
 #############################  The Neural Net  #################################
@@ -105,7 +32,7 @@ class _InputLink(object):
   """
   def __init__(self, node, weight):
     if DEBUG_INST:
-      print("    inputLink created")
+      print("    inputLink created, linked to", node)
     self.input_node = node
     self.weight = weight
     self.partial = 0
@@ -146,22 +73,20 @@ class _Node(object):
       example.
   """
   def __init__(self, node_list=None):
+    if DEBUG_INST:
+      print("  node created", self)
     self.links = []
     self.state = 0
     if node_list is None:
       node_list = []
     for node in node_list:
       self.links.append(_InputLink(node, 2 * random.random() - 1.0))
-    if DEBUG_INST:
-      print("  node created")
 
   def forward(self):
     """
     Feedforward for all the states of the nodes that inputLink into this node.
     """
-    self.state = reduce(
-        add, [link.input_node.state * link.weight for link in self.links]
-    )
+    self.state = sum([link.input_node.state*link.weight for link in self.links])
 
   def accum_partials(self, multiplier):
     """ Accumulate this node's partials. """
@@ -217,7 +142,7 @@ class _Layer(object):
         self.nodes.append(_Node())
     else:                                   # This is not the input layer so
       self.activation = activation          #   we need an activation, and an
-      self.aux_der = aux_der                #   and an auxillary function.
+      self.aux_der = aux_der                #   auxillary 'derivative' function.
       for dummy_index in range(num_nodes):  # Add nodes to this layer and
         self.nodes.append(                  #   to each new node, connect
             _Node(input_layer.nodes)        #   every node of the input
@@ -225,14 +150,13 @@ class _Layer(object):
 
   def forward(self, xs_=None, ys_=None):
     """
-    Forward the states of the nodes in the previous layer through this layer --
-    and applying this nodes activation -- updating the state of each node in
-    this layer.
+    Forward the states of the nodes in the previous layer that feed into this
+    node, applying this node's activation, and updating the state of this node.
 
     Args:
       xs_ (:obj:`list` of :obj:`Number`): The features of the example being fed
         though the layer.
-      ys_ (:obj:`list` of :obj:`list` of :obj:`Number`): The corresponding i
+      ys_ (:obj:`list` of :obj:`list` of :obj:`Number`): The corresponding
         targets.
     """
     if xs_ != None:                         # Then this is the input layer
@@ -241,16 +165,21 @@ class _Layer(object):
       assert len(self.nodes) == len(xs_)
       for node, x__ in zip(self.nodes, xs_):
         node.state = x__
-    else:              # Then this is not the input layer so feed
-      if DEBUG_TRAIN:  #   forward and apply the activation.
-        print("forwarding: through non-input layers")
-      for node in self.nodes:
+    else:                            # This is not the input layer so feed
+      if DEBUG_TRAIN:                #   forward and apply the activation.
+        print("forwarding: through non-input layer")
+      for idk, node in enumerate(self.nodes):
         node.forward()
-        node.state = self.activation.func(node.state)
-      if ys_ != None:  # Then this is the output layer.
-        assert len(ys_) == len(self.nodes)
+        node.state = self.activation(
+            [node.state for node in self.nodes],
+            idk
+        )
+      if ys_ != None:                       # Then this is the output layer
+        assert len(ys_) == len(self.nodes)  #   so accumulate partials.
         for idk, node in enumerate(self.nodes):
-          node.accum_partials(self.aux_der(node.state, ys_[idk]))
+          node.accum_partials(
+              self.aux_der([node.state for node in self.nodes], ys_, idk)
+          )
 
   def backprop(self, mb_adjusted_learning_rate):
     """ For each node in this layer, adjust the incoming weights. """
@@ -262,6 +191,7 @@ class _Layer(object):
     for node in self.nodes:
       node.zero_partials()
 
+
 class Net(object):
   """
   A fully-connected, feed-forward, neural network class.
@@ -271,10 +201,11 @@ class Net(object):
   data.
 
   Currently supported activations:
-    'None'(same as 'id'), 'ReLU', 'sigmoid', and 'tanh'.
+    'None'(same as 'id'), 'ReLU', 'sigmoid', 'tanh', and 'softmax'.
 
   Currently supported loss functins:
-    'MSE', 'sigmoid-MSE' (MSE stands for mean squared error).
+    'MSE' (mean squared error)
+    'NLL' (negative log likelihood)
 
   Args:
     nodes_per_layer (list of int) : A list of integers determining the number
@@ -303,7 +234,7 @@ class Net(object):
     self.layers = []
     self.loss = LOSS_FUNCTIONS[loss]
 
-    assert nodes_per_layer[-1] == 1, "At most one output for now."
+    #assert nodes_per_layer[-1] == 1, "At most one output for now."
     assert loss in LOSS_FUNCTIONS.keys(),\
            "Invalid loss fn: must be one of " + str(LOSS_FUNCTIONS.keys())
     assert len(activations) == len(nodes_per_layer) - 1,\
@@ -342,8 +273,14 @@ class Net(object):
         _Layer(
             nodes_per_layer[-1],
             self.layers[-1],
-            activation,
-            lambda y1, y2: self.loss.der(y1, y2) * activation.der(y1)
+            activation.func,
+            lambda yhats, ys, k: sum(
+                map(
+                    mul,
+                    self.loss.der(yhats, ys),  # components of yhats-y
+                    activation.der(yhats, k)   # sum(grad activ. w/r to k)
+                )
+            )
         )
     )
 
@@ -400,7 +337,7 @@ class Net(object):
     y_hats = self.forward(xss, yss, with_grad=True)
     curr_loss = 0
     for idx, ys_ in enumerate(yss):
-      curr_loss += reduce(add, map(self.loss.func, y_hats[idx], ys_))
+      curr_loss += sum(self.loss.func(y_hats[idx], ys_))
     return curr_loss/len(xss)
 
   def backprop(self, mb_adjusted_learning_rate):
@@ -430,7 +367,7 @@ class Net(object):
     assert(len(xss) == len(yss)), "Lengths of xss and yss should be the same."
 
     if DEBUG_TRAIN:
-      print('hit learn')
+      print('learn method called')
     curr_loss = self._forward(xss, yss)
     self.backprop(learning_rate/len(xss))
     return curr_loss
@@ -439,46 +376,10 @@ class Net(object):
     return self.string
 
 
-#######################  Utilility functions ##################################
-
-#pylint: disable=too-many-arguments,too-many-locals
-def train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30):
-  """
-  A convenient function that implements a loop for training instances of Net.
-  It spews out the last prtlns current losses without the cost of
-  computing the current loss when you don't really need to see it's exact value.
-  It also deals with the situation when the number of samples isn't divisble by
-  the mini-batch size.
-  """
-
-  n_examples = len(xss)
-  thresh = epochs*n_examples/batchsize-int(prtlns*batchsize/n_examples)-1
-
-  for i in range(int(epochs * n_examples / batchsize)):
-    xyss = list(zip(xss, yss))
-    random.shuffle(xyss)
-    xss, yss = zip(*xyss)
-    total_ave_loss = 0
-    for j in range(0, n_examples, batchsize):
-      xss_mb = (xss + xss[:batchsize])[j: j + batchsize]
-      yss_mb = (yss + yss[:batchsize])[j: j + batchsize]
-      net.zero_grads()
-      loss = net.learn(xss_mb, yss_mb, learning_rate)
-      total_ave_loss = (total_ave_loss + loss)/2
-      if i >= thresh and j > n_examples - batchsize * prtlns:
-        print('current loss: {0:12.4f}'.format(total_ave_loss))
-    if i <= thresh:
-      print('current loss: {0:12.4f}'.format(total_ave_loss), end='\b'*26)
-  return net
-
-###############  main  ################
+#################################  main  #######################################
 
 def main():
   """ Run unit tests, generate some data, and test the Net class. """
-
-  ### run the unit tests ###
-  import doctest
-  doctest.testmod()
 
   ### now generate some data and solve a linear regression ###
   num_examples = 20
@@ -494,7 +395,7 @@ def main():
     yss.append([2 * x1_ + 5 * x2_ + 7 + random.normalvariate(0, stdev)])
 
   # mean center and nomalize
-  from pure_python_stats import mean_center, normalize, un_map_weights
+  from llstats import mean_center, normalize, un_map_weights
   xmeans, xss = mean_center(xss)  # x_means is a list of the means of cols of
   xstdevs, xss = normalize(xss)   # the xss; x_stdevs holds the stand devs of
   ymeans, yss = mean_center(yss)  # of the columns; similarly for ymeans and
@@ -509,8 +410,6 @@ def main():
 
   net = train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30)
 
-  DEBUG_TRAIN = False
-
   def compute_r_squared(net, xss, yss):
     """
     Return 1-SSE/SST which is the proportion of the variance in the data
@@ -519,7 +418,7 @@ def main():
     ss_e = 0.0
     ss_t = 0.0
 
-    from pure_python_stats import columnwise_means
+    from llstats import columnwise_means
     ymean = columnwise_means(yss)  # mean of the output variable
                                    # (which is zero if data is mean-centered)
     for idx, y__ in enumerate(yss):
@@ -536,5 +435,3 @@ def main():
   print('weights: ', weights[0], weights[1], weights[2],\
                                                'should be close to', 7, 2, 5)
 
-if __name__ == '__main__':
-  main()
