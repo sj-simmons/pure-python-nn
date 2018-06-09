@@ -14,18 +14,19 @@ Notes:
     (assuming that `python3` is in your `PATH`; otherwise you can run and/or modify the code in IDLE).
 
 Code summary:
-  * [SGD_nn.py](SGD_nn.py): The building blocks of a feed-forward neural net that trains via SGD (stochastic gradient descent).
+  * [ffnn.py](ffnn.py): The building blocks of a feed-forward neural net that trains via stochastic gradient descent.
     Along with some functions to create non-linearity, the following classes are defined:
-    * `Net` -- The neural net, which is built from layers (lists) of instances of the `Node` class.
-    * `Node` -- essentially a list of instances of `InputLink` along with some methods.
+    * `Net` -- The neural net, which is sequence of instances of the `Layer` class.
+    * `Layer` -- consisting of instances of the `Node` class.
+    * `Node` -- essentially a list of instances of `InputLink`.
     * `InputLink` -- a small class with attributes `inputNode`, `weight`, and `partial`, instances of which connect the
-      instances of Node that make up the `Net`.
+      nodes from one layer to the next layer in a net.
 
     Notes:
     * The inputs and outputs to an instance of `Net` are assumed to be lists of list, one list for
       each example in the data set.
-    * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover SGD (stochastic gradient descent)
-      with batchsize = 1; or, gradient descent, by setting batchsize to the number of examples in your data.  
+    * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover stochastic gradient descent
+      with batchsize = 1; or, gradient descent, by setting batchsize to the number of examples in your data.
     * Examples of instantiating the `Net` class:
       * `net = Net([8,1], batchsize = 1, criterion = 'MSE')` -- A model with 8 inputs, 1 ouput, no hidden layers, mean-squared-error criterion
         that trains using stochastic gradient descent.
@@ -36,7 +37,7 @@ Code summary:
         [single-layered perceptron](https://en.wikipedia.org/wiki/Logistic_regression#As_a_single-layer_perceptron) network.
     * One trains an instance of the `Net` class using the `learn` method:
       ``` python
-      for ... 
+      for ...
           ...
           net.learn(inputs_, outputs, learning_rate)
       ```
@@ -51,13 +52,14 @@ Code summary:
 
     TODO:
     * ~~Implement mini-batch gradient descent~~.
-    * Implement learning rate decay.  
-      * It might be best to implement this exterior to `SGD.py`.  The `learn` method in `SGD.py` accepts the learning
+    * Implement learning rate decay.
+      * It might be best to implement this exterior to `ffnn.py`.  The `learn` method in `ffnn.py` accepts the learning
         rate as a parameter that can be changed on the fly (while training).
     * Implement a single hidden layer.
-    * Implement multiple outputs and logSoftMax.
+    * Implement multiple outputs and softmax/logsoftmax.
     * Implement a multiple hidden layers.
-  * [Pure_Python_Stats.py](Pure_Python_Stats.py): This is small library of functions, written in pure Python,
+    * Implement bias nodes in 2nd, 3rd, ... hidden layers.
+  * [llstats.py](llstats.py): This is small library of functions, written in pure Python,
     that are useful, for example, for mean-centering and normalizing data in the form of lists of lists.
 
 Neural net examples:
@@ -77,6 +79,6 @@ Data sets:
 
 Experiments:
   * [experiment1.py](experiment1.py) -- generates fake data appropriate for linear regression on uses an instance of the
-    `Net` class in [SGD_nn.py](SGD_nn.py) to find the least-squares regression line for the data.
+    `Net` class in [ffnn.py](ffnn.py) to find the least-squares regression line for the data.
   * [experiment2.py](experiment2.py) -- runs experiment1 many times and tabulates and analyses the mean and variation
     of the slopes and standard deviations of the resulting regression lines.
