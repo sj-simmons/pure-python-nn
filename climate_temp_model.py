@@ -2,8 +2,8 @@
 
 import csv
 from random import shuffle
-from SGD_nn import Net
-from Pure_Python_Stats import mean_center, normalize, un_map_weights
+from ffnn import Net
+from llstats import mean_center, normalize, un_map_weights
 
 # This code block reads the data from the csv file and, skipping the first line, writes the
 # 2nd, 3rd, and 4th elements of each line to appropriate lists.
@@ -30,11 +30,11 @@ ystdevs, ys = normalize(ys)
 
 # An instance of Net() which accepts 2 inputs and 1 output and mean squared error for the
 # criterion.
-batchsize = 32 
-net = Net([2,1], activations = [None],  batchsize = batchsize, loss = 'MSE')
+batchsize = 32
+net = Net([2,1], activations = [None], loss = 'MSE')
 print(net)
 
-epochs = 10 
+epochs = 10
 learning_rate = 0.1
 num_examples = len(xs)
 indices = list(range(num_examples))
@@ -49,7 +49,7 @@ for i in range(epochs * batchsize):
         end = start + batchsize
         in_  = (xs+xs[:batchsize])[start: end]
         out  = (ys+ys[:batchsize])[start: end]
-        net.zeroGrads()
+        net.zero_grads()
         net.learn(in_, out, learning_rate)
         if i >= printlns and j > num_examples - batchsize * 30:
           loss = net.getTotalError(xs, ys)
