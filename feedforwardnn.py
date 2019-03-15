@@ -9,7 +9,7 @@ Some utility functions for training and testing are also provided.
 import random
 from functools import reduce, partial
 from operator import and_, mul
-from nndicts import LOSS_FUNCTIONS, ACTIVATIONS
+from activationandlossfns import ACTIVATIONS, LOSS_FUNCTIONS
 
 DEBUG_INST = False   # Print debugging info during instantiation of a Net.
 DEBUG_TRAIN = False  # Print debugging info during training.
@@ -207,21 +207,17 @@ class Net(object):
   """
   A fully-connected, feed-forward, neural network class with mini-batch.
 
-  One recovers stochastic gradient descent using batchsize = 1; and batch
-  gradient descent by setting batchsize equal to the number of examples in the
-  training data.
-
   Currently supported activations:
     'None'(same as 'id'), 'ReLU', 'sigmoid', 'tanh', and 'softmax'.
 
-  Currently supported loss functins:
+  Currently supported loss functions:
     'MSE' (mean squared error)
     'NLL' (negative log likelihood)
 
   Args:
     nodes_per_layer (list of int) : A list of integers determining the number
-      of nodes in each layer.
-    activations (:obj:`lst): A list of strings one for each hidden layer fol-
+      of nodes in each layer including the input and output layers.
+    activations (list of :obj:`str`): A list of strings one for each hidden layer fol-
       lowed by one for the output layer, each determining that layer's activ-
       ation function.
     loss (string): A string specifying the loss function to use when gauging
@@ -402,24 +398,30 @@ def train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30):
 
   print('\ntraining with batchsize =', batchsize, ', epochs =', epochs,\
         ', learning rate =', learning_rate, '\n')
-  n_examples = len(xss)
-  thresh = epochs*n_examples/batchsize-int(prtlns*batchsize/n_examples)-1
 
-  for i in range(int(epochs * n_examples / batchsize)):
+  num_examples = len(xss)
+
+  for epoch in range(epochs):   # train the model
+
+    accum_loss = 0  # we accumulate the loss over each epoch
     xyss = list(zip(xss, yss))
     random.shuffle(xyss)
     xss, yss = zip(*xyss)
-    running_ave_loss = 0
-    for j in range(0, n_examples, batchsize):
-      xss_mb = (xss + xss[:batchsize])[j: j + batchsize]
-      yss_mb = (yss + yss[:batchsize])[j: j + batchsize]
+
+    for idx in range(0, num_examples, batchsize):
+
+      xss_mb = (xss + xss[:batchsize])[idx: idx + batchsize]
+      yss_mb = (yss + yss[:batchsize])[idx: idx + batchsize]
+
       net.zero_grads()
-      loss = net.learn(xss_mb, yss_mb, learning_rate)
-      running_ave_loss = (j*running_ave_loss + batchsize * loss)/(j + batchsize)
-      if i >= thresh and j > n_examples - batchsize * prtlns:
-        print('current loss: {0:12.4f}'.format(running_ave_loss))
-    if i <= thresh:
-      print('current loss: {0:12.4f}'.format(running_ave_loss), end='\b'*26)
+      accum_loss += net.learn(xss_mb, yss_mb, learning_rate)
+
+    print_str = "epoch: {0}, loss: {1}".\
+                format(epoch+1,accum_loss*batchsize/num_examples)
+    if epochs<prtlns or epoch<7 or epoch>epochs-prtlns+3: print(print_str)
+    elif epoch == 7: print("...")
+    else: print(print_str, end='\b'*len(print_str),flush=True)
+
   return net
 
 #################################  main  #######################################
@@ -457,7 +459,7 @@ def main():
   epochs = 100
   learning_rate = 0.1
 
-  net = train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=10)
+  net = train(net, xss, yss, batchsize, epochs, learning_rate)
 
   def compute_r_squared(net, xss, yss):
     """
