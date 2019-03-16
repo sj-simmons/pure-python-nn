@@ -39,7 +39,7 @@ ACTIVATIONS = {
         lambda x: x,
         lambda y: [1]
     ),
-    'ReLU': namedtuple('ReLU', 'func der')(
+    'relu': namedtuple('ReLU', 'func der')(
         lambda x: max(0, x),
         lambda y: [0] if y == 0 else [1]
     ),
