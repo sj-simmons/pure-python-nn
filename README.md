@@ -4,7 +4,7 @@ Written with Branton and his Spring 18 AI class.
 
 Notes:
   * All code in this repo runs in pure Python 3. (In the experiments, you can uncomment some lines
-    and produce graphs, if you happen to have [matplotlib](https://matplotlib.org/) installed, otherwise
+    and produce graphs if you happen to have [matplotlib](https://matplotlib.org/) installed; otherwise,
     nothing outside the standard Python installation is needed.)
   * You can pull this entire repo to your computer using git by typing at the command
     line:
@@ -19,10 +19,10 @@ Code summary:
     via mini-batch gradient descent.
     Along with a function useful for training, the following classes are defined:
     * `Net` &mdash; the neural net, which is sequence of instances of the `Layer` class.
-    * `Layer` &mdash; consisting of instances of the `Node` class.
-    * `Node` &mdash; essentially a list of instances of `InputLink`.
-    * `InputLink` &mdash; a small class with attributes `inputNode`, `weight`, and `partial`, instances of which connect the
-      nodes from one layer to nodes the next layer in a net.
+    * `_Layer` &mdash; consisting of instances of the `Node` class.
+    * `_Node` &mdash; essentially a list of instances of `InputLink`.
+    * `_InputLink` &mdash; a small class with attributes `inputNode`, `weight`, and `partial`, instances of which connect the
+      nodes from one layer to nodes the next layer in a `net`.
 
     Notes:
     * The inputs and outputs to an instance of `Net` are assumed to be lists of lists, one list for
@@ -33,29 +33,29 @@ Code summary:
       * `net = Net([8,1], activations = [None], loss = 'MSE')` &mdash; A linear model with 8 inputs, 1 output, no hidden layers,
          and mean-squared-error loss function.
       * `net = Net([15,1], activations = ['sigmoid'], loss = 'MSE )` &mdash; A model with 15 inputs, 1 output, no
-         mean-squared-error loss but first applying the sigmoid function to the output.  This is a
+         hidden layers, and mean-squared-error loss (but first applying the sigmoid function to the output).  This is a
          [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression) model
          (see also [here](https://www.encyclopediaofmath.org/index.php/Logistic_regression)) and is often referred to as a
          [single-layered perceptron](https://en.wikipedia.org/wiki/Logistic_regression#As_a_single-layer_perceptron) network.
     * One trains an instance of the `Net` class using the `learn` method:
       ``` python
-      for ...
+      for _ in range(epochs): 
           ...
           net.learn(xss, yss, learning_rate)
       ```
       where `xss` and `yss` are the inputs and outputs of batches of examples -- so lists of lists (of examples of the data).
     * In your training loop, you must zero out the gradients before learning:
       ``` python
-      for ...
+      for  _ in range(epochs):.
           ...
-          net.zeroGrads()
+          net.zero_grads()
           net.learn(xss, yss, learning_rate)
       ```
-    * A `train` function is also provided (in [feedforwardnn.py](feedforwardnn.py)).
+    * Alternatively to training by hand, a `train` function is also provided (in [feedforwardnn.py](feedforwardnn.py)).
       ``` python
           train(net, xss, yss, batchsize, epochs, learning_rate)
       ```
-      where `net` is an instance of the `Net` class.
+      where `net` is an instance of the `Net` class. (See the example below for usage.)
 
     TODO:
     * ~~Implement mini-batch gradient descent~~.
