@@ -165,7 +165,7 @@ class _Layer(object):
     if xs_ is not None:                     # Then this is the input layer
       if DEBUG_TRAIN:                       #   so just plug in the inputs.
         print("forwarding: setting inputs")
-      assert len(self.nodes) == len(xs_), str(len(self.nodes))+" "+str(len(xs_))
+      assert len(self.nodes) == len(xs_),str(len(self.nodes))+"/="+str(len(xs_))
       for node, x__ in zip(self.nodes, xs_):
         node.state = x__
     elif ys_ is None:                # This is a hidden layer, so feed for-
@@ -182,8 +182,8 @@ class _Layer(object):
       activation = partial(self.activation, [node.state for node in self.nodes])
       for node in self.nodes:
         node.state = activation(node.state)
-      if len(ys_) > 0:
-        for node in self.nodes:
+      if len(ys_) > 0:            # if we are training, prepare
+        for node in self.nodes:   # for backpropogation
           node.accum_partials(
               self.aux_der([node.state for node in self.nodes], ys_)
           )
@@ -254,7 +254,7 @@ class Net(object):
       print("creating an input layer with", nodes_per_layer[0], "node(s).")
     self.layers.append(_Layer(nodes_per_layer[0]))
 
-    for i in range(1, len(nodes_per_layer)-2):
+    for i in range(1, len(nodes_per_layer)-1):
       if DEBUG_INST:
         print(
             "creating a hidden layer", i, "with", nodes_per_layer[i],
@@ -298,9 +298,8 @@ class Net(object):
       self.string += "  layer " + str(i+1)+": "+str(nodes_per_layer[i])+\
                      " nodes;  activation: "+str(activations[i-1])+"\n"
     self.string += "  layer " + str(len(nodes_per_layer)) + ": "+\
-                      str(nodes_per_layer[-1])+" output node(s); "+\
-                   " activation: "+str(activations[-1])+\
-                   ";  loss function: "+str(loss) + "."
+                   str(nodes_per_layer[-1])+" output node(s); "+"activation: "+\
+                   str(activations[-1]) + "; loss function: " + str(loss) + "."
 
   def forward(self, xss, yss=None, with_grad=False):
     """
@@ -326,9 +325,9 @@ class Net(object):
     for idx, xs_ in enumerate(xss):               # Feed each example xs in the
       self.layers[0].forward(xs_=xs_)             #   mini-batch into the input
       for layer in range(1, len(self.layers)-1):  #   layer and forward through
-        self.layers[layer].forward()              #   the rest of the layers.
-      if yss is None:
-        self.layers[-1].forward(ys_=[])
+        self.layers[layer].forward()              #   any hidden layers and,
+      if yss is None:                             #   then, through the output
+        self.layers[-1].forward(ys_=[])           #   layer.
       else:
         self.layers[-1].forward(ys_=yss[idx])
       y_hats.append([node.state for node in self.layers[-1].nodes])
@@ -459,7 +458,7 @@ def main():
   epochs = 100
   learning_rate = 0.1
 
-  net = train(net, xss, yss, batchsize, epochs, learning_rate)
+  net = train(net, xss, yss, batchsize, epochs, learning_rate, 10)
 
   def compute_r_squared(net, xss, yss):
     """

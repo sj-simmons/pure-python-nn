@@ -1,4 +1,4 @@
-# llstats.py  (list of list stats)                          Simmons  Spring 2018
+# liststats.py  (stats on lists of list)                    Simmons  Spring 2018
 #
 # This is a simple 'tensor-like' stats library in pure Python 3.  Many of the
 # functions below operate on m-by-n arrays but those have to be represented as
@@ -12,10 +12,10 @@
 #                                | -5   -6 |
 #                                +-       -+
 #
-# Note: Instead of using this in real life, consider just installing and use
-#       numpy for working with arrays if you are able to; although this library
-#       is fine for prototyping (and thinking about how to work nicely with
-#       lists of lists).
+# Note: Instead of using this library in real life, consider just installing and
+#       using numpy for working with arrays, if you are able to. This library is
+#       fine for prototyping (and thinking about how to work nicely with lists
+#       of lists), and it runs in pure python.
 
 from functools import reduce
 from operator import add, mul, truediv
@@ -61,20 +61,22 @@ def divideLists(lst1, lst2):
     assert reduce(mul, lst2) != 0, "Second list has entry equal to zero."
     return list(map(truediv, lst1, lst2))
 
-def dot_lists(lst1, lst2):
+def dotLists(lst1, lst2):
     """
     Return the dot product of the vectors defined by lst1 and lst2.
 
-    >>> dot_lists([1, 2, 3], [4, 5, 6])
+    >>> dotLists([1, 2, 3], [4, 5, 6])
     32
     """
-    assert len(lst1) == len(lst2), "The lengths of lists "+str(len(lst1))+" and "+str(len(lst2))+" should be the same."
+    assert len(lst1) == len(lst2), "The lengths of lists "+str(len(lst1))+\
+           " and "+str(len(lst2))+" should be the same."
     return sum(multiplyLists(lst1, lst2))
 
 def scalarMultCols(lst, arrList):
     """
-    Return arrList with the first column scalar multiplied by the first element of lst, the
-    second column scalar multiplied by the second element of lst, and so on.
+    Return arrList with the first column scalar multiplied by the first element
+    of lst, the second column scalar multiplied by the second element of lst,
+    and so on.
 
     >>> scalarMultCols([2], [[1], [2], [3]])
     [[2], [4], [6]]
@@ -82,9 +84,9 @@ def scalarMultCols(lst, arrList):
     [[2, 12], [4, 15], [6, 18]]
     """
     assert len(lst) == len(arrList[0]), \
-         "Length of list must be the same as length of the first list in the arrayList"
+        "Length of list must be the same as length of the first list in the\
+         arrayList."
     return list(map(lambda lst2: multiplyLists(lst, lst2), arrList))
-
 
 def add_(arrList1, arrList2):
     """
@@ -97,14 +99,15 @@ def add_(arrList1, arrList2):
     >>> add_([[]], [[]])
     [[]]
     """
-    assert len(arrList1[0]) == len(arrList1[0]) and len(arrList1) == len(arrList1),\
-        "arrayLists must be list of lists, one with the same number of rows and columns\
-         as the other"
+    assert len(arrList1[0])==len(arrList1[0]) and len(arrList1)==len(arrList1),\
+        "ArrayLists must be list of lists, one with the same number of rows and\
+         columns as the other."
     if len(arrList1) == 1:
-        return [[eltpair[0] + eltpair[1] for eltpair in zip(arrList1[0], arrList2[0])]]
+        return [[eltpair[0] + eltpair[1] for eltpair in\
+               zip(arrList1[0], arrList2[0])]]
     else:
-        return [add_([rowpair[0]], [rowpair[1]])[0] for rowpair in zip(arrList1, arrList2)]
-
+        return [add_([rowpair[0]], [rowpair[1]])[0] for rowpair in\
+               zip(arrList1, arrList2)]
 
 def subtract(arrList1, arrList2):
     """
@@ -119,7 +122,6 @@ def subtract(arrList1, arrList2):
     """
     return add_(arrList1, scalarMultCols([-1]*len(arrList2[0]), arrList2))
 
-
 def multiply(arrList1, arrList2):
     """
     Return the element-wise product of two mxn arrayLists.
@@ -131,14 +133,15 @@ def multiply(arrList1, arrList2):
     >>> multiply([[]], [[]])
     [[]]
     """
-    assert len(arrList1[0]) == len(arrList1[0]) and len(arrList1) == len(arrList1),\
-        "arrayLists must be list of lists, one with the same number of rows and columns\
-         as the other"
+    assert len(arrList1[0])==len(arrList1[0]) and len(arrList1)==len(arrList1),\
+        "ArrayLists must be list of lists, one with the same number of rows and\
+         columns as the other."
     if len(arrList1) == 1:
-        return [[eltpair[0] * eltpair[1] for eltpair in zip(arrList1[0], arrList2[0])]]
+        return [[eltpair[0] * eltpair[1] for eltpair in\
+               zip(arrList1[0], arrList2[0])]]
     else:
-        return [multiply([rowpair[0]], [rowpair[1]])[0] for rowpair in zip(arrList1, arrList2)]
-
+        return [multiply([rowpair[0]], [rowpair[1]])[0] for rowpair in\
+               zip(arrList1, arrList2)]
 
 def columnwise_means(arrList):
     """
@@ -149,7 +152,7 @@ def columnwise_means(arrList):
     """
 
     import sys
-    sys.setrecursionlimit(len(arrList)+100)  # quick fix for recursion depth error
+    sys.setrecursionlimit(len(arrList)+100)  # quick fix for recursion depth err
 
     def helper(arrList):
         if len(arrList) == 1:
@@ -161,15 +164,16 @@ def columnwise_means(arrList):
 
 def mean_center(arrList):
     """
-    Mean-center the columns of the arrayList.
+    Mean center the columns of the arrayList.
 
     Args:
         arrList (a list of lists of numbers)
 
     Returns:
-        list, list: A pair consisting of a list each entry of which is the mean of the
-                    corresponding column of arrList, a list of lists each entry of which
-                    is that entry minus the mean of the column that that entry is in.
+        list, list: A pair consisting of a list each entry of which is the mean
+                    of the corresponding column of arrList, a list of lists each
+                    entry of which is that entry minus the mean of the column
+                    that that entry is in.
 
     >>> mean_center([[1, 2, 3], [6, 7, 8]])
     ([3.5, 4.5, 5.5], [[-2.5, -2.5, -2.5], [2.5, 2.5, 2.5]])
@@ -178,8 +182,11 @@ def mean_center(arrList):
     >>> mean_center([[]])
     ([], [[]])
     """
-    means = columnwise_means(arrList) # a list holding the means of the columns of arrList
-    arrList = subtract(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
+    means = columnwise_means(arrList) # a list of means of the cols of arrList
+    arrList = subtract(arrList,
+                       scalarMultCols(means, ones(len(arrList),
+                       len(arrList[0])))
+              )
     return means, arrList
 
 def normalize(arrList):
@@ -222,7 +229,7 @@ def un_center(means, arrList):
         means: A list of numbers (should be the list output by mean_center).
         arrList: A list of list of numbers that is the (mean-centered) data.
     Returns:
-        list: A list of list of numbers.
+        list: A list of list of numbers of the same dimension as arrList.
     """
     return add_(arrList, scalarMultCols(means, ones(len(arrList), len(arrList[0]))))
 
@@ -235,7 +242,7 @@ def un_normalize(stdevs, arrList):
         stdevs: A list of numbers (should be the list output by normalize).
         arrList: A list of list of numbers that is the (normalized) data.
     Returns:
-        list: A list of list of numbers.
+        list: A list of list of numbers of the same dimensions as arrlist.
 
     >>> un_normalize([0.5, 2],[[1, 2], [3,4]])
     [[0.5, 4], [1.5, 8]]
@@ -257,14 +264,18 @@ def un_normalize_slopes(lst, xstdevs, ystdevs):
 
 def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
     """
-    Shift weights to those of model trained on mean-centered and normalized data to the
-    weights of the corresponding un-mean-centered, un-normalized model.
+    Shift weights from those of model trained on mean-centered and normalized
+    data to the weights of the corresponding un-mean-centered, un-normalized
+    model.
 
-    Note: This is only useful for getting the coefficients for writing the regression plane
-          in _linear_ regression.
+    Note: This is only useful for getting the coefficients for writing the reg-
+          ression plane in _linear_ regression. But for a linear model there's
+          no need to include a bias term if the data are mean centered first.
+          Hence we assume there that, since the data are mean-centered, the user
+          did not include a bias in their model.
 
     Args:
-        weights: A list of weights (numbers) with first entry corresponding to the bias.
+        weights: A list of weights (numbers) with first entry.
         xmeans: A list of the x-variable means (numbers).
         xstdevs: A list of the x-variable standard deviations (numbers).
         ymeans: A list of the y-variable means (numbers).
@@ -280,7 +291,7 @@ def un_map_weights(weights, xmeans, xstdevs, ymeans, ystdevs):
            len(weights) == len(xmeans)
 
     slopes = un_normalize_slopes(weights, xstdevs, ystdevs)
-    intercept = ymeans[0] - dot_lists(slopes, xmeans)
+    intercept = ymeans[0] - dotLists(slopes, xmeans)
     return [intercept] + slopes
 
 

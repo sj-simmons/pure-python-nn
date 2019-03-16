@@ -4,10 +4,9 @@
 # slopes and intercepts.
 
 from experiment1 import generate_data
-from llstats import mean_center, normalize, un_map_weights
-from ffnn import Net
+from liststats import mean_center, normalize, un_map_weights
+from feedforwardnn import Net
 from statistics import mean, stdev
-import matplotlib.pyplot as plt
 
 def find_least_squares_reg_line(xs, ys, epochs, learning_rate):
     """ Return the slope and intercept of the regression line. """
@@ -65,6 +64,8 @@ print("mean and st. dev. of intercepts: mean =",\
 # import matplotlib statement at the top to see some nice graphs of the
 # distribution of slopes and weights. If you don't have matplotlib installed
 # have a look at experiment2.png.
+
+#import matplotlib.pyplot as plt
 #plt.subplot(1,2,1)
 #plt.hist(slopes, 50, normed=1)
 #plt.title("slope")
