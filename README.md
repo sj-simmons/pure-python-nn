@@ -27,10 +27,19 @@ Code summary:
     Notes:
     * The inputs and outputs to an instance of `Net` are assumed to be lists of lists, one list for
       each example in the data set:
-      * If `xss` holds the inputs, then `xss` is a list of lists (each element of which we denote by `xs`)
-        and the first list in `xss` consists of the `x` values of the first example in the data.
+      * If `xss` holds the inputs, then `xss` is a list of lists. We denote each sublist of the list `xss` by `xs`.
+        The first sublist in `xss` consists of the `x` values from the first example in the data.
       * Similarly, if the corresponding outputs are called `yss`, then `yss` is a list of lists
         (even if a single output `ys` from the data consists of only a single entry `y`).
+      * For example, in the climate data example below, `xss` looks like
+        ``` python
+        [[336.67, 1366.43], [338.57, 1366.51], [339.92, 1366.51], ... ]
+        ```
+        while `yss` looks like
+        ``` python
+        [[8.0], [19.0], [26.0], ... ].
+        ```
+        The data for the climate model are [temp_co2_data.csv](datasets/temp_co2_data.csv).
     * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover stochastic gradient descent
       by setting `batchsize` = 1; or, batch gradient descent, by setting `batchsize` to the number of examples in your data.
     * Examples of instantiating the `Net` class:
@@ -76,7 +85,7 @@ Code summary:
 
 Neural net examples:
   * [climate_temp_model.py](climate_temp_model.py) &mdash; A global average climate temperature model that trains on these data:
-    [temp_co2_data.csv](datasets/temp_co2_data.csv).
+    [temp_co2_data.csv](datasets/temp_co2_data.csv) (from [esrl.noaa.gov](https://www.esrl.noaa.gov/gmd/aggi/)).
   * [titanic_sigmoid.py](titanic_sigmoid.py) &mdash; Predicts survival after training on numeric versions of Branton's version of the
     Titanic datasets.
   <!--* [housing_model.py](housing_model.py) &mdash; A housing valuation model based on the Ames, Iowa housing data set: [AmesHousing.csv](datasets/AmesHousing.csv).-->
