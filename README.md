@@ -18,15 +18,18 @@ Code summary:
   * [feedforwardnn.py](feedforwardnn.py): The building blocks of a feed-forward neural net that trains
     via mini-batch gradient descent.
     Along with a function useful for training, the following classes are defined:
-    * `Net` &mdash; the neural net, which is sequence of instances of the `Layer` class.
-    * `_Layer` &mdash; consisting of instances of the `Node` class.
-    * `_Node` &mdash; essentially a list of instances of `InputLink`.
+    * `Net` &mdash; the neural net, which is sequence of instances of the `_Layer` class.
+    * `_Layer` &mdash; consisting of instances of the `_Node` class.
+    * `_Node` &mdash; essentially a list of instances of `_InputLink`.
     * `_InputLink` &mdash; a small class with attributes `inputNode`, `weight`, and `partial`, instances of which connect the
       nodes from one layer to nodes the next layer in a `net`.
 
     Notes:
     * The inputs and outputs to an instance of `Net` are assumed to be lists of lists, one list for
-      each example in the data set.
+      each example in the data set.  If `xss` denotes the inputs, the `xss` is a list of lists (each of 
+      which we denote by `xs`) and the first list in `xss` consists of the `x` values for the first example
+      in the data. Similarly, the outputs `yss` is a list of lists (even if a single output `ys` from the data
+      consists of only a single entry `y`).
     * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover stochastic gradient descent
       by setting `batchsize` = 1; or, batch gradient descent, by setting `batchsize` to the number of examples in your data.
     * Examples of instantiating the `Net` class:
