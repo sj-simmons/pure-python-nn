@@ -26,10 +26,11 @@ Code summary:
 
     Notes:
     * The inputs and outputs to an instance of `Net` are assumed to be lists of lists, one list for
-      each example in the data set.  If `xss` denotes the inputs, the `xss` is a list of lists (each of 
-      which we denote by `xs`) and the first list in `xss` consists of the `x` values for the first example
-      in the data. Similarly, the outputs `yss` is a list of lists (even if a single output `ys` from the data
-      consists of only a single entry `y`).
+      each example in the data set:
+      * If `xss` holds the inputs, then `xss` is a list of lists (each element of which we denote by `xs`)
+        and the first list in `xss` consists of the `x` values of the first example in the data.
+      * Similarly, if the corresponding outputs are called `yss`, then `yss` is a list of lists
+        (even if a single output `ys` from the data consists of only a single entry `y`).
     * The `Net` class trains using mini-batch gradient descent.  Of course, you can recover stochastic gradient descent
       by setting `batchsize` = 1; or, batch gradient descent, by setting `batchsize` to the number of examples in your data.
     * Examples of instantiating the `Net` class:
@@ -66,7 +67,7 @@ Code summary:
       * It might be best to implement this exterior to `Net` class.  The `learn` method in accepts the learning
         rate as a parameter that can be changed on the fly (while training).
     * Implement a single hidden layer.
-    * Implement multiple outputs and softmax/logsoftmax.
+    * Implement multiple outputs and softmax/logsoftmax and corresponding loss functions.
     * Implement a multiple hidden layers.
     * Implement bias nodes in 2nd, 3rd, ... hidden layers.
   * [activationandlossfns.py](activationandlossfns.py): Provides various nonlinearities as well as loss functions.
