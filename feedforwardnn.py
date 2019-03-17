@@ -385,7 +385,7 @@ class Net(object):
 ##############################  utilities  #####################################
 
 #pylint: disable=too-many-arguments,too-many-locals
-def train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30):
+def train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=25):
   """
   A convenient function that implements a loop for training instances of the Net
   class defined above.  It spews out the last prtlns current losses without the
@@ -423,14 +423,14 @@ def train(net, xss, yss, batchsize, epochs, learning_rate, prtlns=30):
 
   return net
 
-#################################  main  #######################################
+#################################  test  #######################################
 ### Generate some data and solve a linear regression using the feed forward  ###
 ### neural net classes above.                                                ###
 
-def main():
-  """ Run unit tests, generate some data, and test the Net class. """
+def test1():
+  """ Generate some data with 1 dimensional output, and test the Net class. """
 
-  num_examples = 20
+  num_examples = 30
 
   # generate some data
   xss = []
@@ -449,16 +449,16 @@ def main():
   ymeans, yss = mean_center(yss)  # of the columns; similarly for ymeans and
   ystdevs, yss = normalize(yss)   # and ystdevs.
 
-  batchsize = 20
+  batchsize = 5
 
   # instantiate a neural net using the class defined above
   net = Net([2, 1], activations=[None], loss='MSE')
   print(net)
 
-  epochs = 100
+  epochs = 50
   learning_rate = 0.1
 
-  net = train(net, xss, yss, batchsize, epochs, learning_rate, 10)
+  net = train(net, xss, yss, batchsize, epochs, learning_rate, 20)
 
   def compute_r_squared(net, xss, yss):
     """
@@ -485,5 +485,60 @@ def main():
   print('weights: ', weights[0], weights[1], weights[2],\
                                                'should be close to', 7, 2, 5)
 
+def test2():
+  """ Generate some data with 2 dimensional output, and test the Net class. """
+
+  num_examples = 30
+
+  # generate some data
+  xss = []
+  yss = []
+  stdev = 10
+  for _ in range(num_examples):
+    x1_ = random.uniform(0, 40)
+    x2_ = random.uniform(0, 60)
+    x3_ = random.uniform(0, 50)
+    xss.append([x1_, x2_, x3_])
+    yss.append([2 * x1_ + 5 * x2_ - 10 * x3_ + 7 + random.normalvariate(0, stdev),
+                -5 * x1_ + 2 * x2_ - 3 + random.normalvariate(0, stdev)])
+
+  # mean center and nomalize
+  from liststats import mean_center, normalize, un_map_weights
+  xmeans, xss = mean_center(xss)  # x_means is a list of the means of cols of
+  xstdevs, xss = normalize(xss)   # the xss; x_stdevs holds the stand devs of
+  ymeans, yss = mean_center(yss)  # of the columns; similarly for ymeans and
+  ystdevs, yss = normalize(yss)   # and ystdevs.
+
+  batchsize = 5
+
+  # instantiate a neural net using the class defined above
+  net = Net([3, 2], activations=[None], loss='MSE')
+  print(net)
+
+  epochs = 50
+  learning_rate = 0.1
+
+  net = train(net, xss, yss, batchsize, epochs, learning_rate, 20)
+
+  def compute_r_squared(net, xss, yss):
+    """
+    Return 1-SSE/SST which is the proportion of the variance in the data
+    explained by the regression hyper-plane.
+    """
+    ss_e = 0.0
+    ss_t = 0.0
+
+    from liststats import columnwise_means
+    ymeans = columnwise_means(yss)  # mean of the output variable
+                                    # (which are zero if data is mean-centered)
+    for idx, y__ in enumerate(yss):
+      y_hat = net.forward([xss[idx]])
+      ss_e += (y__[0] - y_hat[0][0])**2 + (y__[1] - y_hat[0][1])**2
+      ss_t += (y__[0] - ymeans[0])**2 + (y__[1] - ymeans[1])**2
+    return 1.0-ss_e/ss_t
+
+  print('1-SSE/SST =', compute_r_squared(net, xss, yss,))
+
+
 if __name__ == '__main__':
-  main()
+  test1()
