@@ -2,10 +2,9 @@
 #
 # This is a simple 'tensor-like' stats library in pure Python 3.  Many of the
 # functions below operate on m-by-n arrays but those have to be represented as
-# lists of lists, and so are called 'arrayLists';
-#
-# like, say, [[1,2],[3,-4],[-5,-6]], which represents the 3-by-2 array:
-#
+# lists of lists, and so are called 'arrayList's; for instance, the arrayList
+#                          [[1,2],[3,-4],[-5,-6]]
+# represents the 3-by-2 array:
 #                                +-       -+
 #                                |  1    2 |
 #                                |  3   -4 |
@@ -19,10 +18,10 @@
 
 from functools import reduce
 from operator import add, mul, truediv
+from textwrap import dedent
 
 def ones(m,n):
-    """
-    Return an m-by-n arrayList consisting of all ones.
+    """Return an m-by-n arrayList consisting of all ones.
 
     >>> ones(2,3)
     [[1, 1, 1], [1, 1, 1]]
@@ -30,8 +29,7 @@ def ones(m,n):
     return m * [n * [1]]
 
 def addLists(lst1, lst2):
-    """
-    Return the elementwise sum of lst1 and lst2.
+    """Return the elementwise sum of lst1 and lst2.
 
     >>> addLists([1, 2, 3],[4, 5, 6])
     [5, 7, 9]
@@ -40,14 +38,12 @@ def addLists(lst1, lst2):
     return list(map(add, lst1, lst2))
 
 def multiplyLists(lst1, lst2):
-    """ Return the elementwise product of lst1 and lst2. """
-
+    """Return the elementwise product of lst1 and lst2."""
     assert len(lst1) == len(lst2), "The lists have to be the same length."
     return list(map(mul, lst1, lst2))
 
 def divideLists(lst1, lst2):
-    """
-    Return the elementwise quotient of lst1 and lst2.
+    """Return the elementwise quotient of lst1 and lst2.
 
     >>> divideLists([1, 2, 3],[4, 5, 6])
     [0.25, 0.4, 0.5]
@@ -56,24 +52,23 @@ def divideLists(lst1, lst2):
      ...
     AssertionError: Second list has entry equal to zero.
     """
-
     assert len(lst1) == len(lst2), "The lists have to be the same length."
     assert reduce(mul, lst2) != 0, "Second list has entry equal to zero."
     return list(map(truediv, lst1, lst2))
 
 def dotLists(lst1, lst2):
-    """
-    Return the dot product of the vectors defined by lst1 and lst2.
+    """Return the dot product of the vectors defined by lst1 and lst2.
 
     >>> dotLists([1, 2, 3], [4, 5, 6])
     32
     """
-    assert len(lst1) == len(lst2), "The lengths of lists "+str(len(lst1))+\
-           " and "+str(len(lst2))+" should be the same."
+    assert len(lst1) == len(lst2), "The lengths of lists ("+str(len(lst1))+\
+           ") and ("+str(len(lst2))+") should be the same."
     return sum(multiplyLists(lst1, lst2))
 
 def scalarMultCols(lst, arrList):
-    """
+    """Multiply columns by a scalars.
+
     Return arrList with the first column scalar multiplied by the first element
     of lst, the second column scalar multiplied by the second element of lst,
     and so on.
@@ -83,14 +78,13 @@ def scalarMultCols(lst, arrList):
     >>> scalarMultCols([2, 3], [[1, 4], [2, 5], [3, 6]])
     [[2, 12], [4, 15], [6, 18]]
     """
-    assert len(lst) == len(arrList[0]), \
-        "Length of list must be the same as length of the first list in the\
-         arrayList."
+    assert len(lst) == len(arrList[0]), dedent("""\
+    Length of lst must be the same as length of the first list in arrayList.
+    """)
     return list(map(lambda lst2: multiplyLists(lst, lst2), arrList))
 
 def add_(arrList1, arrList2):
-    """
-    Return the element-wise sum of two mxn arrayLists.
+    """Return the element-wise sum of two mxn arrayLists.
 
     >>> add_([[1, 2, 3]], [[4, 5, 6]])
     [[5, 7, 9]]
@@ -99,15 +93,13 @@ def add_(arrList1, arrList2):
     >>> add_([[]], [[]])
     [[]]
     """
-    assert len(arrList1[0])==len(arrList1[0]) and len(arrList1)==len(arrList1),\
-        "ArrayLists must be list of lists, one with the same number of rows and\
-         columns as the other."
+    assert len(arrList1[0])==len(arrList2[0]) and len(arrList1)==len(arrList2),\
+        "ArrayLists must be list of lists, with the same number of rows and\
+         columns."
     if len(arrList1) == 1:
-        return [[eltpair[0] + eltpair[1] for eltpair in\
-               zip(arrList1[0], arrList2[0])]]
+        return [[sum(tup) for tup in zip(arrList1[0], arrList2[0])]]
     else:
-        return [add_([rowpair[0]], [rowpair[1]])[0] for rowpair in\
-               zip(arrList1, arrList2)]
+        return [add_([tup[0]], [tup[1]])[0] for tup in zip(arrList1, arrList2)]
 
 def subtract(arrList1, arrList2):
     """
@@ -137,8 +129,7 @@ def multiply(arrList1, arrList2):
         "ArrayLists must be list of lists, one with the same number of rows and\
          columns as the other."
     if len(arrList1) == 1:
-        return [[eltpair[0] * eltpair[1] for eltpair in\
-               zip(arrList1[0], arrList2[0])]]
+        return [[tup[0] * tup[1] for tup in zip(arrList1[0], arrList2[0])]]
     else:
         return [multiply([rowpair[0]], [rowpair[1]])[0] for rowpair in\
                zip(arrList1, arrList2)]
@@ -194,8 +185,6 @@ def normalize(arrList):
     Normalize the arrayList, meaning divide each column by its standard deviation if that
     standard deviation is nonzero, and leave the column unmodified if it's standard deviation
     is zero.
-
-    Note: Columns
 
     Args:
         arrList (a list of lists of numbers)
